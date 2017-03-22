@@ -36,7 +36,7 @@
 const char* get_version()
 {
 #ifndef VERSION_HASH
-#define VERSION_HASH "(unkown)"
+#define VERSION_HASH "(unknown)"
 #endif
     return VERSION_HASH;
 }

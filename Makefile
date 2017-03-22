@@ -37,7 +37,9 @@ ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 	override CFLAGS := $(CFLAGS) \
 		-D VERSION_HASH=\"$(VERSION)\"
 else
+ifneq ($(VERSION_HASH), )
 	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION_HASH)\"
+endif
 endif
 
 TIME_FILE = $(dir $@).$(notdir $@)_time
