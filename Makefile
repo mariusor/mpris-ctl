@@ -8,9 +8,12 @@ LIBS = dbus-1
 CFLAGS = -std=c99 -Wall -Wextra -g
 # General linker settings
 LDFLAGS =
-
 # sources
 SOURCES = main.c
+# Destination directory
+DESTDIR = /
+# Install path (bin/ is appended automatically)
+INSTALL_PREFIX = usr/local
 
 # Append pkg-config specific libraries if need be
 ifneq ($(LIBS),)
@@ -18,15 +21,7 @@ ifneq ($(LIBS),)
 	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
-# Verbose option, to output compile and link commands
-export V := false
-export CMD_PREFIX := @
-ifeq ($(V),true)
- 	CMD_PREFIX :=
-endif
-
 # Version macros
-# Comment/remove this section to remove versioning
 USE_VERSION := false
 # If this isn't a git repo or the repo has no tags, git describe will return non-zero
 ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
@@ -56,21 +51,17 @@ END_TIME = read st < $(TIME_FILE) ; \
 	echo `date -u -d @$$st '+%H:%M:%S'`
 
 build:
-ifeq ($(USE_VERSION), true)
-	@echo "$< $@ : $(BIN_NAME) v$(VERSION_STRING)"
-else
-	@echo "$< $@ : $(BIN_NAME)"
-endif
-	@$(START_TIME)
-	$(CMD_PREFIX)$(CC) \
-		$(CFLAGS) \
-		$(LDFLAGS) \
-		$(INCLUDES) \
-		$(SOURCES) \
-		-o$(BIN_NAME) 
-	@echo -en "\t Compile time: "
-	@$(END_TIME)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME) 
 
+.PHONY: clean
 clean: 
 	@echo "Deleting $(BIN_NAME)"
 	@$(RM) $(BIN_NAME)
+
+.PHONY: install 
+install:
+	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
+
+.PHONY: uninstall
+uninstall:
+	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
