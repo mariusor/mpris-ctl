@@ -3,13 +3,15 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dbus/dbus.h>
 
-#define LOCAL_NAME               "org.mpris.mprisctl"
-#define MPRIS_DESTINATION          "org.mpris.MediaPlayer2"
+// dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames
+
+#define LOCAL_NAME                 "org.mpris.mprisctl"
+#define MPRIS_PLAYER_NAMESPACE     "org.mpris.MediaPlayer2"
 #define MPRIS_PLAYER_PATH          "/org/mpris/MediaPlayer2"
 #define MPRIS_PLAYER_INTERFACE     "org.mpris.MediaPlayer2.Player"
 #define MPRIS_METHOD_NEXT          "Next"
@@ -18,6 +20,11 @@
 #define MPRIS_METHOD_PAUSE         "Pause"
 #define MPRIS_METHOD_STOP          "Stop"
 #define MPRIS_METHOD_PLAY_PAUSE    "PlayPause"
+
+#define DBUS_DESTINATION           "org.freedesktop.DBus"
+#define DBUS_PATH                  "/"
+#define DBUS_INTERFACE             "org.freedesktop.DBus"
+#define DBUS_METHOD_LIST_NAMES     "ListNames"
 
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"
@@ -79,58 +86,79 @@ void print_help(char* name)
     fprintf(stdout, help_msg, version, name);
 }
 
-char* get_player_name(DBusConnection* conn) {
-    char* player_name;
-    if (NULL == conn) { return NULL; }
-
-    
-
-    player_name = ".spotify";
-    char *ret = malloc(strlen(player_name));
-    strcpy(ret, player_name);
-    return ret;
-}
-
-char* get_dbus_destination(DBusConnection* conn) 
-{
-    const char* mpris_namespace = MPRIS_DESTINATION;
-    char* player_name = get_player_name(conn);
-    char* full_name = malloc(strlen(mpris_namespace)+strlen(player_name)+1);
-
-    strcpy(full_name, mpris_namespace);
-    strcat(full_name, player_name);
-
-    return full_name;
-}
-
-DBusPendingCall* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method) 
+DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method) 
 {
     DBusMessage* msg;
     DBusPendingCall* pending;
 
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
-    if (NULL == msg) { 
-        fprintf(stderr, "Message Null!");
-        return NULL;
-    }
+    if (NULL == msg) { return NULL; }
     
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, -1)) { // -1 is default timeout
-        fprintf(stderr, "Out Of Memory!");
+        fprintf(stderr, "Out Of Memory!\n");
         return NULL;
     }
     if (NULL == pending) { 
-        fprintf(stderr, "Pending Call Null");
+        fprintf(stderr, "Pending Call Null\n");
         return NULL;
     }
 
     // free message
     dbus_message_unref(msg);
 
-    return pending;
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) {
+        fprintf(stderr, "Reply Null\n"); 
+    }
+
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+
+    return reply;
 }
 
+char* get_player_name(DBusConnection* conn) {
+    char* player_name;
+    if (NULL == conn) { return NULL; }
+
+    char* method = DBUS_METHOD_LIST_NAMES;
+    char* destination = DBUS_DESTINATION;
+    char* path = DBUS_PATH;
+    char* interface = DBUS_INTERFACE;
+    const char* mpris_namespace = MPRIS_PLAYER_NAMESPACE;
+    DBusMessage* reply = call_dbus_method(conn, destination, path, interface, method); 
+    if (NULL == reply) { return NULL; }
+
+    DBusMessageIter rootIter;
+    if (dbus_message_iter_init(reply, &rootIter) && 
+        DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
+        DBusMessageIter arrayElementIter;
+
+        dbus_message_iter_recurse(&rootIter, &arrayElementIter); 
+        while (dbus_message_iter_has_next(&arrayElementIter)) {
+            if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayElementIter)) {
+                char* str;
+                dbus_message_iter_get_basic(&arrayElementIter, &str);
+                if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
+                    player_name = str;
+                    break;
+                }
+            } 
+            dbus_message_iter_next(&arrayElementIter);
+        }
+    }
+
+    char *ret = malloc(strlen(player_name));
+    strcpy(ret, player_name);
+    return ret;
+}
 
 int main(int argc, char** argv) 
 {
@@ -175,17 +203,14 @@ int main(int argc, char** argv)
         goto _error;
     }
 
-    DBusPendingCall* pending;
-    char* destination = get_dbus_destination(conn);
+    char* destination = get_player_name(conn);
+    if (NULL == destination) { goto _error; }
     
-    pending = call_dbus_method(conn, destination, // target for the method call
-                           MPRIS_PLAYER_PATH, // object to call on
-                           MPRIS_PLAYER_INTERFACE, // interface to call on
-                           dbus_method); // method name
+    call_dbus_method(conn, destination, 
+                           MPRIS_PLAYER_PATH, 
+                           MPRIS_PLAYER_INTERFACE, 
+                           dbus_method); 
 
-    if (NULL == pending) {
-        //
-    }
     dbus_connection_flush(conn);
 
 
