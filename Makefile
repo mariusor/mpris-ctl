@@ -11,9 +11,7 @@ LDFLAGS =
 # sources
 SOURCES = main.c
 # Destination directory
-DESTDIR = /
-# Install path (bin/ is appended automatically)
-INSTALL_PREFIX = usr/local
+DESTDIR = /usr/local
 
 # Append pkg-config specific libraries if need be
 ifneq ($(LIBS),)
@@ -60,8 +58,8 @@ clean:
 
 .PHONY: install 
 install:
-	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
+	install $(BIN_NAME) $(DESTDIR)/bin
 
 .PHONY: uninstall
 uninstall:
-	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
+	$(RM) $(DESTDIR)/bin/$(BIN_NAME)
