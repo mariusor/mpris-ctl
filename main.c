@@ -34,14 +34,10 @@
 
 const char* get_version()
 {
-#ifdef VERSION_MAJOR
-    const char* version = VERSION_MAJOR "." VERSION_MINOR "." VERSION_PATCH;
-#else
-#ifdef VERSION_HASH
-    const char* version = VERSION_HASH;
+#ifndef VERSION_HASH
+#define VERSION_HASH "(unkown)"
 #endif
-#endif
-    return version;
+    return VERSION_HASH;
 }
 
 const char* get_dbus_method (char* command) 
