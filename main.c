@@ -8,8 +8,6 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
-// dbus-send --type=method_call --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames
-
 #define LOCAL_NAME                 "org.mpris.mprisctl"
 #define MPRIS_PLAYER_NAMESPACE     "org.mpris.MediaPlayer2"
 #define MPRIS_PLAYER_PATH          "/org/mpris/MediaPlayer2"
@@ -36,10 +34,12 @@
 
 const char* get_version()
 {
-#ifdef USE_VERSION
+#ifdef VERSION_MAJOR
     const char* version = VERSION_MAJOR "." VERSION_MINOR "." VERSION_PATCH;
 #else
-    const char* version = "(local-build)";
+#ifdef VERSION_HASH
+    const char* version = VERSION_HASH;
+#endif
 #endif
     return version;
 }
