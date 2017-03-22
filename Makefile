@@ -25,20 +25,13 @@ ifeq ($(V),true)
  	CMD_PREFIX :=
 endif
 
-TIME_FILE = $(dir $@).$(notdir $@)_time
-START_TIME = date '+%s' > $(TIME_FILE)
-END_TIME = read st < $(TIME_FILE) ; \
-	$(RM) $(TIME_FILE) ; \
-	st=$$((`date '+%s'` - $$st - 86400)) ; \
-	echo `date -u -d @$$st '+%H:%M:%S'`
-
 # Version macros
 # Comment/remove this section to remove versioning
 USE_VERSION := false
 # If this isn't a git repo or the repo has no tags, git describe will return non-zero
 ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 	USE_VERSION := true
-	VERSION := $(shell git describe --tags --long --dirty --always | \
+	VERSION := $(shell git describe --tags --long --dirty=-git --always | \
 		sed 's/v\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)-\?.*-\([0-9]*\)-\(.*\)/\1 \2 \3 \4 \5/g')
 	VERSION_MAJOR := $(word 1, $(VERSION))
 	VERSION_MINOR := $(word 2, $(VERSION))
@@ -55,13 +48,29 @@ ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 		-D VERSION_HASH=\"$(VERSION_HASH)\"
 endif
 
+TIME_FILE = $(dir $@).$(notdir $@)_time
+START_TIME = date '+%s' > $(TIME_FILE)
+END_TIME = read st < $(TIME_FILE) ; \
+	$(RM) $(TIME_FILE) ; \
+	st=$$((`date '+%s'` - $$st - 86400)) ; \
+	echo `date -u -d @$$st '+%H:%M:%S'`
+
+build:
+ifeq ($(USE_VERSION), true)
+	@echo "$< $@ : $(BIN_NAME) v$(VERSION_STRING)"
+else
+	@echo "$< $@ : $(BIN_NAME)"
+endif
+	@$(START_TIME)
+	$(CMD_PREFIX)$(CC) \
+		$(CFLAGS) \
+		$(LDFLAGS) \
+		$(INCLUDES) \
+		$(SOURCES) \
+		-o$(BIN_NAME) 
+	@echo -en "\t Compile time: "
+	@$(END_TIME)
+
 clean: 
 	@echo "Deleting $(BIN_NAME)"
 	@$(RM) $(BIN_NAME)
-
-build:
-	@echo "$< -> $@ : $(BIN_NAME)"
-	@$(START_TIME)
-	$(CMD_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME) 
-	@echo -en "\t Compile time: "
-	@$(END_TIME)
