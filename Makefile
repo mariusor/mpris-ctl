@@ -10,10 +10,8 @@ CFLAGS = -std=c99 -Wall -Wextra -g
 LDFLAGS =
 # sources
 SOURCES = main.c
-# Destination directory
-DESTDIR = /
 # Install path (bin/ is appended automatically)
-INSTALL_PREFIX = usr/local
+INSTALL_PREFIX = /usr/local/bin/
 
 # Append pkg-config specific libraries if need be
 ifneq ($(LIBS),)
@@ -57,8 +55,8 @@ clean:
 
 .PHONY: install 
 install:
-	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
+	install $(BIN_NAME) $(INSTALL_PREFIX)
 
 .PHONY: uninstall
 uninstall:
-	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
+	$(RM) $(INSTALL_PREFIX)$(BIN_NAME)
