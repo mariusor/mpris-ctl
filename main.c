@@ -7,18 +7,16 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
-#define DBUS_MPRIS_NAMESPACE		    "org.mpris.CLICtl"
-#define DBUS_LOCAL_PLAYER			    "org.mpris.MediaPlayer2.spotify"
-#define DBUS_MPRIS_PLAYER_PATH		    "/org/mpris/MediaPlayer2"
+#define DBUS_LOCAL_PLAYER               "org.mpris.mprisctl"
+#define DBUS_MPRIS_DESTINATION            "org.mpris.MediaPlayer2.spotify"
+#define DBUS_MPRIS_PLAYER_PATH          "/org/mpris/MediaPlayer2"
 #define DBUS_MPRIS_PLAYER_INTERFACE     "org.mpris.MediaPlayer2.Player"
-#define DBUS_MPRIS_METHOD_NEXT          ".Next"
-#define DBUS_MPRIS_METHOD_PREVIOUS      ".Previous"
-#define DBUS_MPRIS_METHOD_PLAY          ".Play"
-#define DBUS_MPRIS_METHOD_PAUSE         ".Pause"
-#define DBUS_MPRIS_METHOD_STOP          ".Stop"
-#define DBUS_MPRIS_METHOD_PLAY_PAUSE    ".PlayPause"
-#define DBUS_MPRIS_TRACK_SIGNAL		    ".TrackChange"
-#define DBUS_MPRIS_STATUS_SIGNAL	    ".StatusChange"
+#define DBUS_MPRIS_METHOD_NEXT          "Next"
+#define DBUS_MPRIS_METHOD_PREVIOUS      "Previous"
+#define DBUS_MPRIS_METHOD_PLAY          "Play"
+#define DBUS_MPRIS_METHOD_PAUSE         "Pause"
+#define DBUS_MPRIS_METHOD_STOP          "Stop"
+#define DBUS_MPRIS_METHOD_PLAY_PAUSE    "PlayPause"
 
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"
@@ -42,9 +40,7 @@ char* get_dbus_method (char* command)
 {
     if (NULL == command) return NULL;
 
-    char* dbus_method = malloc(strlen(command)+1);
-    char* full_dbus_action = malloc(strlen(DBUS_MPRIS_PLAYER_INTERFACE)+strlen(command)+1);
-    char* p;
+    char* dbus_method;
 
     if (strcmp(command, ARG_PLAY) == 0) {
         dbus_method = DBUS_MPRIS_METHOD_PLAY;
@@ -65,13 +61,7 @@ char* get_dbus_method (char* command)
         dbus_method = DBUS_MPRIS_METHOD_PLAY_PAUSE;
     }
 
-    char *interface_name = DBUS_MPRIS_PLAYER_INTERFACE;
-    p = full_dbus_action;
-
-    while(*interface_name) *p++ = *interface_name++;
-    while(*dbus_method) *p++ = *dbus_method++;
-
-    return full_dbus_action;
+    return dbus_method;
 }
 
 void print_help(char* name)
@@ -90,6 +80,37 @@ void print_help(char* name)
     fprintf(stdout, help_msg, version, name);
 }
 
+DBusPendingCall* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method) 
+{
+    DBusMessage* msg;
+    DBusPendingCall* pending;
+
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(destination, // target for the method call
+                                      path, // object to call on
+                                      interface, // interface to call on
+                                      method); // method name
+    if (NULL == msg) { 
+        fprintf(stderr, "Message Null!");
+        return NULL;
+    }
+    
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, -1)) { // -1 is default timeout
+        fprintf(stderr, "Out Of Memory!");
+        return NULL;
+    }
+    if (NULL == pending) { 
+        fprintf(stderr, "Pending Call Null");
+        return NULL;
+    }
+
+    // free message
+    dbus_message_unref(msg);
+    return pending;
+}
+
+
 int main(int argc, char** argv) 
 {
     char* name = argv[0];
@@ -105,11 +126,9 @@ int main(int argc, char** argv)
     }
 
     char *dbus_method = get_dbus_method(command);
-    DBusMessage* msg;
     //DBusMessageIter args;
     DBusConnection* conn;
     DBusError err;
-    DBusPendingCall* pending;
 
     // initialise the errors
     dbus_error_init(&err);
@@ -136,37 +155,18 @@ int main(int argc, char** argv)
     if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) { 
         goto _error;
     }
-    // create a new method call and check for errors
-    msg = dbus_message_new_method_call(DBUS_MPRIS_NAMESPACE, // target for the method call
-                                      DBUS_MPRIS_PLAYER_PATH, // object to call on
-                                      DBUS_MPRIS_PLAYER_INTERFACE, // interface to call on
-                                      dbus_method); // method name
-    if (NULL == msg) { 
-        fprintf(stderr, "Message Null!");
-        goto _error;
-    }
-    
-    //char* param = "";
-    // append arguments
-    //dbus_message_iter_init_append(msg, &args);
-    //if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &param)) { 
-    //    strcat(err_msg, "Out Of Memory!");
-    //    goto _error;
-    //}
 
-    // send message and get a handle for a reply
-    if (!dbus_connection_send_with_reply (conn, msg, &pending, -1)) { // -1 is default timeout
-        fprintf(stderr, "Out Of Memory!");
-        goto _error;
-    }
-    if (NULL == pending) { 
-        fprintf(stderr, "Pending Call Null");
-        goto _error;
+    DBusPendingCall* pending;
+    pending = call_dbus_method(conn, DBUS_MPRIS_DESTINATION, // target for the method call
+                           DBUS_MPRIS_PLAYER_PATH, // object to call on
+                           DBUS_MPRIS_PLAYER_INTERFACE, // interface to call on
+                           dbus_method); // method name
+
+    if (NULL == pending) {
+        //
     }
     dbus_connection_flush(conn);
 
-    // free message
-    dbus_message_unref(msg);
 
     _success: 
     {
