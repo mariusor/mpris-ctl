@@ -72,7 +72,7 @@ void print_help(char* name)
     const char* help_msg;
     const char* version = get_version();
 
-    help_msg = "MPRIS player control, version %s\n" \
+    help_msg = "MPRIS control, version %s\n" \
                "Usage: %s [" ARG_PLAY "|" \
                 ARG_PLAY_PAUSE "|" \
                 ARG_PAUSE "|" \
