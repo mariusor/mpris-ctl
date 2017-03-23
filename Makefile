@@ -42,13 +42,6 @@ ifneq ($(VERSION_HASH), )
 endif
 endif
 
-TIME_FILE = $(dir $@).$(notdir $@)_time
-START_TIME = date '+%s' > $(TIME_FILE)
-END_TIME = read st < $(TIME_FILE) ; \
-	$(RM) $(TIME_FILE) ; \
-	st=$$((`date '+%s'` - $$st - 86400)) ; \
-	echo `date -u -d @$$st '+%H:%M:%S'`
-
 build:
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME) 
 
