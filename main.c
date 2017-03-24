@@ -73,12 +73,15 @@ void print_help(char* name)
     const char* version = get_version();
 
     help_msg = "MPRIS control, version %s\n" \
-               "Usage: %s [" ARG_PLAY "|" \
-                ARG_PLAY_PAUSE "|" \
-                ARG_PAUSE "|" \
-                ARG_STOP "|" \
-                ARG_NEXT "|" \
-                ARG_PREVIOUS "]\n";
+               "Usage:\n  %s COMMAND - Control running MPRIS player\n" \
+               "Commands:\n"
+               "  " ARG_HELP "\t\tThis help message\n" \
+               "  " ARG_PLAY_PAUSE "\t\tToggle play or pause\n" \
+               "  " ARG_PAUSE "\t\tPause the player\n" \
+               "  " ARG_STOP "\t\tStop the player\n" \
+               "  " ARG_NEXT "\t\tChange track to the next in the playlist\n" \
+               "  " ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n";
+
 
     fprintf(stdout, help_msg, version, name);
 }
