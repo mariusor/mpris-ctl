@@ -9,6 +9,7 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
+#define MAX_DBUS_ITEMS             200
 #define LOCAL_NAME                 "org.mpris.mprisctl"
 #define MPRIS_PLAYER_NAMESPACE     "org.mpris.MediaPlayer2"
 #define MPRIS_PLAYER_PATH          "/org/mpris/MediaPlayer2"
@@ -144,7 +145,8 @@ char* get_player_name(DBusConnection* conn) {
         DBusMessageIter arrayElementIter;
 
         dbus_message_iter_recurse(&rootIter, &arrayElementIter); 
-        while (dbus_message_iter_has_next(&arrayElementIter)) {
+        unsigned int cnt;
+        while (dbus_message_iter_has_next(&arrayElementIter) && ++cnt < MAX_DBUS_ITEMS ) {
             if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayElementIter)) {
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
