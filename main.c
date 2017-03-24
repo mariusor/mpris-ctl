@@ -181,6 +181,10 @@ int main(int argc, char** argv)
     }
 
     char *dbus_method = (char*)get_dbus_method(command);
+    if (NULL == dbus_method) {
+        fprintf(stderr, "Invalid command\n");
+        goto _error;
+    }
     DBusConnection* conn;
     DBusError err;
 
