@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-//#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,8 +90,6 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 {
     DBusMessage* msg;
     DBusPendingCall* pending;
-    //assert(destination != NULL);
-    //assert(method != NULL);
 
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
@@ -151,7 +148,6 @@ char* get_player_name(DBusConnection* conn) {
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
-                    player_name = malloc(strlen(str));
                     player_name = str;
                     break;
                 }
@@ -160,10 +156,7 @@ char* get_player_name(DBusConnection* conn) {
         }
     }
 
-    char *ret = malloc(strlen(player_name));
-    strcpy(ret, player_name);
-    if (strlen(ret) == 0) return NULL;
-    return ret;
+    return player_name;
 }
 
 int main(int argc, char** argv) 
