@@ -170,19 +170,17 @@ int main(int argc, char** argv)
 {
     char* name = argv[0];
     if (argc <= 1) {
-        print_help(name);
-        goto _success;
+        goto _help;
     }
     
     char *command = argv[1];
     if (strcmp(command, ARG_HELP) == 0) {
-        print_help(name);
-        goto _success;
+        goto _help;
     }
 
     char *dbus_method = (char*)get_dbus_method(command);
     if (NULL == dbus_method) {
-        fprintf(stderr, "Invalid command\n");
+        fprintf(stderr, "Invalid command %s (use help for help)\n", command);
         goto _error;
     }
     DBusConnection* conn;
@@ -223,7 +221,6 @@ int main(int argc, char** argv)
 
     dbus_connection_flush(conn);
 
-
     _success: 
     {
         return EXIT_SUCCESS;
@@ -231,6 +228,11 @@ int main(int argc, char** argv)
     _error: 
     {
         return EXIT_FAILURE;
+    }
+    _help: 
+    {
+        print_help(name);
+        goto _success;
     }
 }
 
