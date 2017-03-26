@@ -25,6 +25,10 @@
 #define DBUS_INTERFACE             "org.freedesktop.DBus"
 #define DBUS_METHOD_LIST_NAMES     "ListNames"
 
+// The default timeout leads to hangs when calling
+//   certain players which don't seem to reply to MPRIS methods
+#define DBUS_CONNECTION_TIMEOUT    100 //ms
+
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"
 #define ARG_PAUSE       "pause"
@@ -96,7 +100,7 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     if (NULL == msg) { return NULL; }
     
     // send message and get a handle for a reply
-    if (!dbus_connection_send_with_reply (conn, msg, &pending, -1)) { // -1 is default timeout
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
         fprintf(stderr, "Out Of Memory!\n");
         return NULL;
     }
@@ -141,9 +145,8 @@ char* get_player_name(DBusConnection* conn) {
         DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
         DBusMessageIter arrayElementIter;
 
-        dbus_message_iter_recurse(&rootIter, &arrayElementIter); 
-        unsigned int cnt;
-        while (dbus_message_iter_has_next(&arrayElementIter) && ++cnt < MAX_DBUS_ITEMS ) {
+        dbus_message_iter_recurse(&rootIter, &arrayElementIter);
+        while (dbus_message_iter_has_next(&arrayElementIter)) {
             if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayElementIter)) {
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
