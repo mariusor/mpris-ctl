@@ -35,6 +35,8 @@
 #define MPRIS_PNAME_METADATA       "Metadata"
 
 #define MPRIS_PROP_PLAYBACK_STATUS "PlaybackStatus"
+#define MPRIS_PROP_METADATA        "Metadata"
+
 #define DBUS_DESTINATION           "org.freedesktop.DBus"
 #define DBUS_PATH                  "/"
 #define DBUS_INTERFACE             "org.freedesktop.DBus"
@@ -54,18 +56,34 @@
 #define ARG_PREVIOUS    "prev"
 #define ARG_PLAY_PAUSE  "pp"
 #define ARG_STATUS      "status"
+#define ARG_INFO        "info"
+
+#define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
+
+#define ARG_INFO_TRACK_NAME      "%track_name"
+#define ARG_INFO_TRACK_NUMBER    "%track_number"
+#define ARG_INFO_TRACK_LENGTH    "%track_length"
+#define ARG_INFO_ARTIST_NAME     "%artist_name"
+#define ARG_INFO_ALBUM_NAME      "%album_name"
+#define ARG_INFO_ALBUM_ARTISTS   "%album_artists"
+
+#define ARG_INFO_PLAYBACK_STATUS "%play_status"
+#define ARG_INFO_SHUFFLE_MODE    "%shuffle"
+#define ARG_INFO_VOLUME          "%volume"
+#define ARG_INFO_LOOP_STATUS     "%loop_status"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
 "Usage:\n  %s COMMAND - Control running MPRIS player\n" \
 "Commands:\n"\
 "\t" ARG_HELP "\t\tThis help message\n" \
-"\t" ARG_STATUS "\t\tGet the play status\n" \
 "\t" ARG_PLAY_PAUSE "\t\tToggle play or pause\n" \
 "\t" ARG_PAUSE "\t\tPause the player\n" \
 "\t" ARG_STOP "\t\tStop the player\n" \
 "\t" ARG_NEXT "\t\tChange track to the next in the playlist\n" \
-"\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n"
-
+"\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
+"\t" ARG_STATUS "\t\tGet the play status\n" \
+"\t" ARG_INFO "\t\t[format] Get the play status - default format \"" ARG_INFO_DEFAULT_STATUS "\"\n" \
+""
 typedef struct mpris_metadata {
     int track_number;
     int* audio_bpm;
@@ -112,6 +130,10 @@ const char* get_dbus_property_name (char* command)
     if (strcmp(command, ARG_STATUS) == 0) {
         return MPRIS_PROP_PLAYBACK_STATUS;
     }
+    if (strcmp(command, ARG_INFO) == 0) {
+        return MPRIS_PROP_METADATA;
+    }
+
     return NULL;
 }
 
@@ -137,7 +159,7 @@ const char* get_dbus_method (char* command)
     if (strcmp(command, ARG_PLAY_PAUSE) == 0) {
         return MPRIS_METHOD_PLAY_PAUSE;
     }
-    if (strcmp(command, ARG_STATUS) == 0) {
+    if (strcmp(command, ARG_STATUS) == 0 || strcmp(command, ARG_INFO) == 0) {
         return DBUS_PROPERTIES_INTERFACE;
     }
 
@@ -445,6 +467,61 @@ char* get_player_name(DBusConnection* conn)
     return player_name;
 }
 
+size_t
+occurrences(const char *needle, const char *haystack) {
+  if (NULL == needle || NULL == haystack) return -1;
+
+  char *pos = (char *)haystack;
+  size_t i = 0;
+  size_t l = strlen(needle);
+  if (l == 0) return 0;
+
+  while ((pos = strstr(pos, needle))) {
+    pos += l;
+    i++;
+  }
+
+  return i;
+}
+
+char *str_replace(const char *str, const char *sub, const char *replace) {
+  char *pos = (char *) str;
+  int count = occurrences(sub, str);
+
+  if (0 >= count) return strdup(str);
+
+  int size = (
+        strlen(str)
+      - (strlen(sub) * count)
+      + strlen(replace) * count
+    ) + 1;
+
+  char *result = (char *) malloc(size);
+  if (NULL == result) return NULL;
+  memset(result, '\0', size);
+  char *current;
+  while ((current = strstr(pos, sub))) {
+    int len = current - pos;
+    strncat(result, pos, len);
+    strncat(result, replace, strlen(replace));
+    pos = current + strlen(sub);
+  }
+
+  if (pos != (str + strlen(str))) {
+    strncat(result, pos, (str - pos));
+  }
+
+  return result;
+}
+
+void print_mpris_info(mpris_properties *props, char* format)
+{
+    fprintf(stderr, "fmt: %s\n", format);
+    fprintf(stderr, "fmt: %s\n", str_replace(format, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
+
+    fprintf(stdout, "%s\n", props->playback_status);
+}
+
 int main(int argc, char** argv)
 {
     char* name = argv[0];
@@ -455,6 +532,17 @@ int main(int argc, char** argv)
     char *command = argv[1];
     if (strcmp(command, ARG_HELP) == 0) {
         goto _help;
+    }
+    char *info_format;
+    if (strcmp(command, ARG_INFO) == 0) {
+        if (argc > 2) {
+            info_format = argv[2];
+        } else {
+            info_format = ARG_INFO_DEFAULT_STATUS;
+        }
+    }
+    if (strcmp(command, ARG_STATUS) == 0) {
+        info_format = ARG_INFO_PLAYBACK_STATUS;
     }
 
     char *dbus_method = (char*)get_dbus_method(command);
@@ -502,8 +590,8 @@ int main(int argc, char** argv)
                          MPRIS_PLAYER_INTERFACE,
                          dbus_method);
     } else {
-        mpris_properties prop = get_mpris_properties(conn, destination);
-        fprintf(stdout, "%s\n", prop.playback_status);
+        mpris_properties properties = get_mpris_properties(conn, destination);
+        print_mpris_info(&properties, info_format);
     }
 
     dbus_connection_flush(conn);
