@@ -45,7 +45,7 @@ const char* get_version()
     return VERSION_HASH;
 }
 
-const char* get_dbus_method (char* command) 
+const char* get_dbus_method (char* command)
 {
     if (NULL == command) return NULL;
 
@@ -90,7 +90,7 @@ void print_help(char* name)
     fprintf(stdout, help_msg, version, name);
 }
 
-DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method) 
+DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
 {
     DBusMessage* msg;
     DBusPendingCall* pending;
@@ -98,13 +98,13 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
     if (NULL == msg) { return NULL; }
-    
+
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
         fprintf(stderr, "Out Of Memory!\n");
         return NULL;
     }
-    if (NULL == pending) { 
+    if (NULL == pending) {
         fprintf(stderr, "Pending Call Null\n");
         return NULL;
     }
@@ -119,7 +119,7 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
     if (NULL == reply) {
-        fprintf(stderr, "Reply Null\n"); 
+        fprintf(stderr, "Reply Null\n");
     }
 
     // free the pending message handle
@@ -137,11 +137,11 @@ char* get_player_name(DBusConnection* conn) {
     char* path = DBUS_PATH;
     char* interface = DBUS_INTERFACE;
     const char* mpris_namespace = MPRIS_PLAYER_NAMESPACE;
-    DBusMessage* reply = call_dbus_method(conn, destination, path, interface, method); 
+    DBusMessage* reply = call_dbus_method(conn, destination, path, interface, method);
     if (NULL == reply) { return NULL; }
 
     DBusMessageIter rootIter;
-    if (dbus_message_iter_init(reply, &rootIter) && 
+    if (dbus_message_iter_init(reply, &rootIter) &&
         DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
         DBusMessageIter arrayElementIter;
 
@@ -154,7 +154,7 @@ char* get_player_name(DBusConnection* conn) {
                     player_name = str;
                     break;
                 }
-            } 
+            }
             dbus_message_iter_next(&arrayElementIter);
         }
     }
@@ -162,13 +162,13 @@ char* get_player_name(DBusConnection* conn) {
     return player_name;
 }
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     char* name = argv[0];
     if (argc <= 1) {
         goto _help;
     }
-    
+
     char *command = argv[1];
     if (strcmp(command, ARG_HELP) == 0) {
         goto _help;
@@ -187,45 +187,45 @@ int main(int argc, char** argv)
 
     // connect to the system bus and check for errors
     conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
-    if (dbus_error_is_set(&err)) { 
+    if (dbus_error_is_set(&err)) {
         fprintf(stderr, "Connection error(%s)\n", err.message);
         dbus_error_free(&err);
     }
-    if (NULL == conn) { 
+    if (NULL == conn) {
         goto _error;
     }
 
     // request a name on the bus
-    int ret = dbus_bus_request_name(conn, LOCAL_NAME, 
+    int ret = dbus_bus_request_name(conn, LOCAL_NAME,
                                DBUS_NAME_FLAG_REPLACE_EXISTING,
                                &err);
-    if (dbus_error_is_set(&err)) { 
+    if (dbus_error_is_set(&err)) {
         fprintf(stderr, "Name error(%s)\n", err.message);
-        dbus_error_free(&err); 
+        dbus_error_free(&err);
     }
-    if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) { 
+    if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) {
         goto _error;
     }
 
     char* destination = get_player_name(conn);
     if (NULL == destination) { goto _error; }
-    
-    call_dbus_method(conn, destination, 
-                           MPRIS_PLAYER_PATH, 
-                           MPRIS_PLAYER_INTERFACE, 
-                           dbus_method); 
+
+    call_dbus_method(conn, destination,
+                           MPRIS_PLAYER_PATH,
+                           MPRIS_PLAYER_INTERFACE,
+                           dbus_method);
 
     dbus_connection_flush(conn);
 
-    _success: 
+    _success:
     {
         return EXIT_SUCCESS;
     }
-    _error: 
+    _error:
     {
         return EXIT_FAILURE;
     }
-    _help: 
+    _help:
     {
         print_help(name);
         goto _success;
