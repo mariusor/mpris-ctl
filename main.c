@@ -200,18 +200,14 @@ double extract_double_var(DBusMessageIter *iter, DBusError *error)
     double result;
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
-        }
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return 0;
     }
 
     DBusMessageIter variantIter;
     dbus_message_iter_recurse(iter, &variantIter);
     if (DBUS_TYPE_DOUBLE != dbus_message_iter_get_arg_type(&variantIter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "variant_should_be_double", "This variant reply message must have double content");
-        }
+        dbus_set_error_const(error, "variant_should_be_double", "This variant reply message must have double content");
         return 0;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
@@ -222,18 +218,14 @@ char* extract_string_var(DBusMessageIter *iter, DBusError *error)
 {
     char* result;
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
-        }
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return NULL;
     }
 
     DBusMessageIter variantIter;
     dbus_message_iter_recurse(iter, &variantIter);
     if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&variantIter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "variant_should_be_string", "This variant reply message must have string content");
-        }
+        dbus_set_error_const(error, "variant_should_be_string", "This variant reply message must have string content");
         return NULL;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
@@ -244,9 +236,7 @@ int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
 {
     int64_t result;
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
-        }
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return 0;
     }
 
@@ -254,9 +244,7 @@ int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
     dbus_message_iter_recurse(iter, &variantIter);
 
     if (DBUS_TYPE_INT64 != dbus_message_iter_get_arg_type(&variantIter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "variant_should_be_int32", "This variant reply message must have int32 content");
-        }
+        dbus_set_error_const(error, "variant_should_be_int32", "This variant reply message must have int32 content");
         return 0;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
@@ -268,9 +256,7 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     bool *result;
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
-        }
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return false;
     }
 
@@ -278,9 +264,7 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     dbus_message_iter_recurse(iter, &variantIter);
 
     if (DBUS_TYPE_BOOLEAN != dbus_message_iter_get_arg_type(&variantIter)) {
-        if (NULL != error) {
-            dbus_set_error_const(error, "variant_should_be_boolean", "This variant reply message must have boolean content");
-        }
+        dbus_set_error_const(error, "variant_should_be_boolean", "This variant reply message must have boolean content");
         return false;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
@@ -344,11 +328,11 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
         while (true) {
             char* key;
             if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&arrayElementIter)) {
-                DBusError *err = 0;
+                DBusError err = {};
                 DBusMessageIter dictIter;
                 dbus_message_iter_recurse(&arrayElementIter, &dictIter);
                 if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dictIter)) {
-                    dbus_set_error_const(err, "missing_key", "This message iterator doesn't have key");
+                    dbus_set_error_const(&err, "missing_key", "This message iterator doesn't have key");
                 }
                 dbus_message_iter_get_basic(&dictIter, &key);
 
@@ -358,42 +342,43 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
                 dbus_message_iter_next(&dictIter);
 
                 if (!strncmp(key, MPRIS_PNAME_CANCONTROL, strlen(MPRIS_PNAME_CANCONTROL))) {
-                     properties.can_control = extract_boolean_var(&dictIter, err);
+                     properties.can_control = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGONEXT, strlen(MPRIS_PNAME_CANGONEXT))) {
-                     properties.can_go_next = extract_boolean_var(&dictIter, err);
+                     properties.can_go_next = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGOPREVIOUS, strlen(MPRIS_PNAME_CANGOPREVIOUS))) {
-                   properties.can_go_previous = extract_boolean_var(&dictIter, err);
+                   properties.can_go_previous = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANPAUSE, strlen(MPRIS_PNAME_CANPAUSE))) {
-                    properties.can_pause = extract_boolean_var(&dictIter, err);
+                    properties.can_pause = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANPLAY, strlen(MPRIS_PNAME_CANPLAY))) {
-                    properties.can_play = extract_boolean_var(&dictIter, err);
+                    properties.can_play = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANSEEK, strlen(MPRIS_PNAME_CANSEEK))) {
-                    properties.can_seek = extract_boolean_var(&dictIter, err);
+                    properties.can_seek = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_LOOPSTATUS, strlen(MPRIS_PNAME_LOOPSTATUS))) {
-                    properties.loop_status = extract_string_var(&dictIter, err);
+                    properties.loop_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_METADATA, strlen(MPRIS_PNAME_METADATA))) {
                 }
                 if (!strncmp(key, MPRIS_PNAME_PLAYBACKSTATUS, strlen(MPRIS_PNAME_PLAYBACKSTATUS))) {
-                     properties.playback_status = extract_string_var(&dictIter, err);
+                     properties.playback_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_POSITION, strlen(MPRIS_PNAME_POSITION))) {
-                      properties.position= extract_int64_var(&dictIter, err);
+                      properties.position= extract_int64_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_SHUFFLE, strlen(MPRIS_PNAME_SHUFFLE))) {
-                    properties.shuffle = extract_boolean_var(&dictIter, err);
+                    properties.shuffle = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_VOLUME, strlen(MPRIS_PNAME_VOLUME))) {
-                     properties.volume = extract_double_var(&dictIter, err);
+                     properties.volume = extract_double_var(&dictIter, &err);
                 }
-                if (NULL != err) {
-                    fprintf(stderr, "%s\n", err->message);
+                if (dbus_error_is_set(&err)) {
+                    fprintf(stderr, "error: %s\n", err.message);
+                    dbus_error_free(&err);
                 }
             }
             if (!dbus_message_iter_has_next(&arrayElementIter)) {
