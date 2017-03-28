@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "sdbus.h"
 #include "sstring.h"
@@ -49,9 +50,23 @@
 "\t" ARG_PAUSE "\t\tPause the player\n" \
 "\t" ARG_STOP "\t\tStop the player\n" \
 "\t" ARG_NEXT "\t\tChange track to the next in the playlist\n" \
-"\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist" \
+"\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
 "\t" ARG_STATUS "\t\tGet the play status\n" \
-"\t" ARG_INFO "\t\t[format] Get the play status - default format \"" ARG_INFO_DEFAULT_STATUS "\"\n" \
+"\t\tequivaluent to " ARG_INFO " \"%s\"\n" \
+"\t" ARG_INFO "\t\t[format] Get the play status\n" \
+"\t\tdefault format \"%s\"\n" \
+"Format specifiers:\n" \
+"\t%" ARG_INFO_TRACK_NAME "\tprints the track name\n" \
+"\t%" ARG_INFO_TRACK_NUMBER "\tprints the track number\n" \
+"\t%" ARG_INFO_TRACK_LENGTH "\tprints the track length (seconds)\n" \
+"\t%" ARG_INFO_ARTIST_NAME "\tprints the artist name\n" \
+"\t%" ARG_INFO_ALBUM_NAME "\tprints the album name\n" \
+"\t%" ARG_INFO_ALBUM_ARTISTS "\tprints the album artists (comma separated)\n" \
+"\t%" ARG_INFO_PLAYBACK_STATUS "\tprints the playback status\n" \
+"\t%" ARG_INFO_SHUFFLE_MODE "\tprints the shuffle mode\n" \
+"\t%" ARG_INFO_VOLUME "\t\tprints the volume\n" \
+"\t%" ARG_INFO_LOOP_STATUS "\tprints the loop status\n" \
+"\t%" ARG_INFO_POSITION "\tprints the song position (seconds)\n" \
 ""
 
 const char* get_version()
@@ -110,28 +125,31 @@ void print_help(char* name)
     const char* version = get_version();
 
     help_msg = HELP_MESSAGE;
+    char* info_def = ARG_INFO_DEFAULT_STATUS;
+    char* status_def = ARG_INFO_PLAYBACK_STATUS;
 
-    fprintf(stdout, help_msg, version, name);
+    fprintf(stdout, help_msg, version, name, status_def, info_def);
 }
 
 void print_mpris_info(mpris_properties *props, char* format)
 {
-
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
     char* volume_label = get_zero_string(char_size * 4);
-    snprintf(volume_label, 4, "%.2f", props->volume);
-    char* pos_label = get_zero_string(char_size * 30);
-    snprintf(pos_label, 30, "%f", (float)props->position);
+    snprintf(volume_label, 30, "%.2f", props->volume);
+    char* pos_label = get_zero_string(char_size * 10);
+    snprintf(pos_label, 0, "%" PRId64, props->position);
 
-    format = str_replace(format, ARG_INFO_SHUFFLE_MODE, shuffle_label);
-    format = str_replace(format, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
-    format = str_replace(format, ARG_INFO_VOLUME, volume_label);
-    format = str_replace(format, ARG_INFO_LOOP_STATUS, props->loop_status);
-    format = str_replace(format, ARG_INFO_POSITION, pos_label);
-    //fprintf(stderr, "%s: len %u\n", format, (unsigned)strlen(format));
+    char* output = str_replace(format, "\\n", "\n");
 
-    fprintf(stdout, "%s\n", format);
-    free(format);
+    output = str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
+    output = str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
+    output = str_replace(output, ARG_INFO_VOLUME, volume_label);
+    output = str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
+    output = str_replace(output, ARG_INFO_POSITION, pos_label);
+    //fprintf(stderr, "%s: len %u\n", output, (unsigned)strlen(output));
+
+    fprintf(stdout, "%s\n", output);
+    free(output);
 }
 
 int main(int argc, char** argv)
