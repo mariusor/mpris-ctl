@@ -3,7 +3,7 @@ CC ?= gcc
 LIBS = dbus-1
 CFLAGS = -std=c99 -Wall -Wextra -g
 LDFLAGS =
-SOURCES = main.c
+SOURCES = src/main.c
 DESTDIR = /
 INSTALL_PREFIX = usr/local
 
@@ -21,13 +21,13 @@ ifneq ($(VERSION), )
 endif
 
 build:
-	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME) 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME)
 
 .PHONY: clean
-clean: 
+clean:
 	@$(RM) $(BIN_NAME)
 
-.PHONY: install 
+.PHONY: install
 install:
 	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
 
