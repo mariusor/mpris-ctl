@@ -30,6 +30,8 @@
 #define MPRIS_PNAME_METADATA       "Metadata"
 
 #define MPRIS_PROP_PLAYBACK_STATUS "PlaybackStatus"
+#define MPRIS_PROP_METADATA        "Metadata"
+
 #define DBUS_DESTINATION           "org.freedesktop.DBus"
 #define DBUS_PATH                  "/"
 #define DBUS_INTERFACE             "org.freedesktop.DBus"

@@ -18,17 +18,34 @@
 #define ARG_PREVIOUS    "prev"
 #define ARG_PLAY_PAUSE  "pp"
 #define ARG_STATUS      "status"
+#define ARG_INFO        "info"
+
+#define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
+
+#define ARG_INFO_TRACK_NAME      "%track_name"
+#define ARG_INFO_TRACK_NUMBER    "%track_number"
+#define ARG_INFO_TRACK_LENGTH    "%track_length"
+#define ARG_INFO_ARTIST_NAME     "%artist_name"
+#define ARG_INFO_ALBUM_NAME      "%album_name"
+#define ARG_INFO_ALBUM_ARTISTS   "%album_artists"
+
+#define ARG_INFO_PLAYBACK_STATUS "%play_status"
+#define ARG_INFO_SHUFFLE_MODE    "%shuffle"
+#define ARG_INFO_VOLUME          "%volume"
+#define ARG_INFO_LOOP_STATUS     "%loop_status"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
 "Usage:\n  %s COMMAND - Control running MPRIS player\n" \
 "Commands:\n"\
 "\t" ARG_HELP "\t\tThis help message\n" \
-"\t" ARG_STATUS "\t\tGet the play status\n" \
 "\t" ARG_PLAY_PAUSE "\t\tToggle play or pause\n" \
 "\t" ARG_PAUSE "\t\tPause the player\n" \
 "\t" ARG_STOP "\t\tStop the player\n" \
 "\t" ARG_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n"
+"\t" ARG_STATUS "\t\tGet the play status\n" \
+"\t" ARG_INFO "\t\t[format] Get the play status - default format \"" ARG_INFO_DEFAULT_STATUS "\"\n" \
+""
 
 const char* get_version()
 {
@@ -44,6 +61,10 @@ const char* get_dbus_property_name (char* command)
     if (strcmp(command, ARG_STATUS) == 0) {
         return MPRIS_PROP_PLAYBACK_STATUS;
     }
+    if (strcmp(command, ARG_INFO) == 0) {
+        return MPRIS_PROP_METADATA;
+    }
+
     return NULL;
 }
 
