@@ -18,6 +18,11 @@ char* str_replace(char* source, const char* search, const char* replace)
     size_t se_len = strlen(search);
     size_t re_len = strlen(replace);
     size_t so_len = strlen(source);
+
+    if (se_len == 0) { return source; }
+    if (re_len == 0) { return source; }
+    if (so_len == 0) { return source; }
+
     size_t max_matches = so_len / se_len;
 
     size_t matches[max_matches];

@@ -32,6 +32,7 @@
 #define ARG_INFO_ARTIST_NAME     "%artist_name"
 #define ARG_INFO_ALBUM_NAME      "%album_name"
 #define ARG_INFO_ALBUM_ARTISTS   "%album_artists"
+#define ARG_INFO_BITRATE         "%bitrate"
 
 #define ARG_INFO_PLAYBACK_STATUS "%play_status"
 #define ARG_INFO_SHUFFLE_MODE    "%shuffle"
@@ -51,9 +52,9 @@
 "\t" ARG_STOP "\t\tStop the player\n" \
 "\t" ARG_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
-"\t" ARG_STATUS "\t\tGet the play status\n" \
-"\t\tequivaluent to " ARG_INFO " \"%s\"\n" \
-"\t" ARG_INFO "\t\t[format] Get the play status\n" \
+"\t" ARG_STATUS "\t\tGet the playback status\n" \
+"\t\tequivalent to " ARG_INFO " \"%s\"\n" \
+"\t" ARG_INFO "\t\t[format] Display information about the current track\n" \
 "\t\tdefault format \"%s\"\n" \
 "Format specifiers:\n" \
 "\t%" ARG_INFO_TRACK_NAME "\tprints the track name\n" \
@@ -67,6 +68,7 @@
 "\t%" ARG_INFO_VOLUME "\t\tprints the volume\n" \
 "\t%" ARG_INFO_LOOP_STATUS "\tprints the loop status\n" \
 "\t%" ARG_INFO_POSITION "\tprints the song position (seconds)\n" \
+"\t%" ARG_INFO_BITRATE "\tprints the track's bitrate\n" \
 ""
 
 const char* get_version()
@@ -138,6 +140,13 @@ void print_mpris_info(mpris_properties *props, char* format)
     snprintf(volume_label, 30, "%.2f", props->volume);
     char* pos_label = get_zero_string(char_size * 10);
     snprintf(pos_label, 0, "%" PRId64, props->position);
+    char* track_number_label = get_zero_string(char_size * 3);
+    snprintf(track_number_label, 3, "%d", props->metadata.track_number);
+    char* bitrate_label = get_zero_string(char_size * 5);
+    snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
+    char* length_label = get_zero_string(char_size * 10);
+    snprintf(length_label, 10, "%d", props->metadata.length);
+
 
     char* output = str_replace(format, "\\n", "\n");
 
@@ -146,7 +155,11 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_VOLUME, volume_label);
     output = str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
     output = str_replace(output, ARG_INFO_POSITION, pos_label);
-    //fprintf(stderr, "%s: len %u\n", output, (unsigned)strlen(output));
+    output = str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
+    //output = str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
+    output = str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
+    output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
+    output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
 
     fprintf(stdout, "%s\n", output);
     free(output);
