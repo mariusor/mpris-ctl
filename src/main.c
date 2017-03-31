@@ -139,7 +139,7 @@ void print_mpris_info(mpris_properties *props, char* format)
     char* volume_label = get_zero_string(char_size * 4);
     snprintf(volume_label, 30, "%.2f", props->volume);
     char* pos_label = get_zero_string(char_size * 10);
-    snprintf(pos_label, 0, "%" PRId64, props->position);
+    snprintf(pos_label, 10, "%" PRId64, props->position);
     char* track_number_label = get_zero_string(char_size * 3);
     snprintf(track_number_label, 3, "%d", props->metadata.track_number);
     char* bitrate_label = get_zero_string(char_size * 5);
