@@ -30,6 +30,8 @@
 #define MPRIS_PNAME_METADATA       "Metadata"
 
 #define MPRIS_PROP_PLAYBACK_STATUS "PlaybackStatus"
+#define MPRIS_PROP_METADATA        "Metadata"
+
 #define DBUS_DESTINATION           "org.freedesktop.DBus"
 #define DBUS_PATH                  "/"
 #define DBUS_INTERFACE             "org.freedesktop.DBus"
@@ -37,20 +39,35 @@
 #define DBUS_METHOD_LIST_NAMES     "ListNames"
 #define DBUS_METHOD_GET_ALL        "GetAll"
 
+#define MPRIS_METADATA_BITRATE      "bitrate"
+#define MPRIS_METADATA_ART_URL      "mpris:artUrl"
+#define MPRIS_METADATA_LENGTH       "mpris:length"
+#define MPRIS_METADATA_TRACKID      "mpris:trackid"
+#define MPRIS_METADATA_ALBUM        "xesam:album"
+#define MPRIS_METADATA_ALBUM_ARTIST "xesam:albumArtist"
+#define MPRIS_METADATA_ARTIST       "xesam:artist"
+#define MPRIS_METADATA_COMMENT      "xesam:comment"
+#define MPRIS_METADATA_TITLE        "xesam:title"
+#define MPRIS_METADATA_TRACK_NUMBER "xesam:trackNumber"
+#define MPRIS_METADATA_URL          "xesam:url"
+#define MPRIS_METADATA_YEAR         "year"
+
 // The default timeout leads to hangs when calling
 //   certain players which don't seem to reply to MPRIS methods
 #define DBUS_CONNECTION_TIMEOUT    100 //ms
 
 typedef struct mpris_metadata {
     int track_number;
-    int* audio_bpm;
+    int bitrate;
     int disc_number;
     int length; // mpris specific
-    char** album_artist;
-    char** composer;
-    char** genre;
-    char* album;
+    char* album_artist;
+    char* composer;
+    char* genre;
     char* artist;
+    char* comment;
+    char* track_id;
+    char* album;
     char* content_created;
     char* title;
     char* url;
@@ -135,6 +152,7 @@ double extract_double_var(DBusMessageIter *iter, DBusError *error)
 char* extract_string_var(DBusMessageIter *iter, DBusError *error)
 {
     char* result;
+
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return NULL;
@@ -145,6 +163,25 @@ char* extract_string_var(DBusMessageIter *iter, DBusError *error)
     if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&variantIter)) {
         dbus_set_error_const(error, "variant_should_be_string", "This variant reply message must have string content");
         return NULL;
+    }
+    dbus_message_iter_get_basic(&variantIter, &result);
+    return result;
+}
+
+int32_t extract_int32_var(DBusMessageIter *iter, DBusError *error)
+{
+    int32_t result;
+    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        return 0;
+    }
+
+    DBusMessageIter variantIter;
+    dbus_message_iter_recurse(iter, &variantIter);
+
+    if (DBUS_TYPE_INT32 != dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_set_error_const(error, "variant_should_be_int32", "This variant reply message must have int32 content");
+        return 0;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
     return result;
@@ -162,7 +199,7 @@ int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
     dbus_message_iter_recurse(iter, &variantIter);
 
     if (DBUS_TYPE_INT64 != dbus_message_iter_get_arg_type(&variantIter)) {
-        dbus_set_error_const(error, "variant_should_be_int32", "This variant reply message must have int32 content");
+        dbus_set_error_const(error, "variant_should_be_int64", "This variant reply message must have int64 content");
         return 0;
     }
     dbus_message_iter_get_basic(&variantIter, &result);
@@ -187,6 +224,120 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     }
     dbus_message_iter_get_basic(&variantIter, &result);
     return result;
+}
+
+#define MAX_STRING 100
+#define MAX_COUNT 10
+char* extract_string_array_var(DBusMessageIter *iter, DBusError *error)
+{
+    char* result;
+    //char **result = malloc(sizeof(char*) * MAX_STRING * MAX_COUNT);
+    //if (!result)
+    //    return NULL;
+
+    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        return NULL;
+    }
+    DBusMessageIter variantIter;
+    dbus_message_iter_recurse(iter, &variantIter);
+
+    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_set_error_const(error, "variant_should_be_array", "This variant reply message must have array content");
+        return NULL;
+    }
+    DBusMessageIter arrayIter;
+    dbus_message_iter_recurse(&variantIter, &arrayIter);
+    //size_t arr_cnt = 0;
+    while (true) {
+        if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayIter)) {
+            dbus_message_iter_get_basic(&arrayIter, &result);
+            return result;
+            break;
+        }
+        if (!dbus_message_iter_has_next(&arrayIter)) {
+            break;
+        }
+        dbus_message_iter_next(&arrayIter);
+    }
+    return NULL;
+}
+
+mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
+{
+    mpris_metadata track = {};
+
+    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        return track;
+    }
+
+    DBusMessageIter variantIter;
+    dbus_message_iter_recurse(iter, &variantIter);
+    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_set_error_const(error, "variant_should_be_array", "This variant reply message must have array content");
+        return track;
+    }
+    DBusMessageIter arrayIter;
+    dbus_message_iter_recurse(&variantIter, &arrayIter);
+    while (true) {
+        char* key;
+        if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&arrayIter)) {
+            DBusMessageIter dictIter;
+            dbus_message_iter_recurse(&arrayIter, &dictIter);
+            if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dictIter)) {
+                dbus_set_error_const(error, "missing_key", "This message iterator doesn't have key");
+            }
+            dbus_message_iter_get_basic(&dictIter, &key);
+
+            if (!dbus_message_iter_has_next(&dictIter)) {
+                continue;
+            }
+            dbus_message_iter_next(&dictIter);
+
+            if (!strncmp(key, MPRIS_METADATA_BITRATE, strlen(MPRIS_METADATA_BITRATE))) {
+                track.bitrate = extract_int32_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_ART_URL, strlen(MPRIS_METADATA_ART_URL))) {
+                track.art_url = extract_string_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_LENGTH, strlen(MPRIS_METADATA_LENGTH))) {
+                track.length = extract_int64_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_TRACKID, strlen(MPRIS_METADATA_TRACKID))) {
+                track.track_id = extract_string_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_ALBUM_ARTIST, strlen(MPRIS_METADATA_ALBUM_ARTIST))) {
+                track.album_artist = extract_string_array_var(&dictIter, error);
+            } else if (!strncmp(key, MPRIS_METADATA_ALBUM, strlen(MPRIS_METADATA_ALBUM))) {
+                track.album = extract_string_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_ARTIST, strlen(MPRIS_METADATA_ARTIST))) {
+                track.artist = extract_string_array_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_COMMENT, strlen(MPRIS_METADATA_COMMENT))) {
+                track.comment = extract_string_array_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_TITLE, strlen(MPRIS_METADATA_TITLE))) {
+                track.title = extract_string_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_TRACK_NUMBER, strlen(MPRIS_METADATA_TRACK_NUMBER))) {
+                track.track_number = extract_int32_var(&dictIter, error);
+            }
+            if (!strncmp(key, MPRIS_METADATA_URL, strlen(MPRIS_METADATA_URL))) {
+                track.url = extract_string_var(&dictIter, error);
+            }
+            if (dbus_error_is_set(error)) {
+                fprintf(stderr, "error: %s\n", error->message);
+                dbus_error_free(error);
+            }
+        }
+        if (!dbus_message_iter_has_next(&arrayIter)) {
+            break;
+        }
+        dbus_message_iter_next(&arrayIter);
+    }
+    return track;
 }
 
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
@@ -281,6 +432,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
                     properties.loop_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_METADATA, strlen(MPRIS_PNAME_METADATA))) {
+                    properties.metadata = load_metadata(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_PLAYBACKSTATUS, strlen(MPRIS_PNAME_PLAYBACKSTATUS))) {
                      properties.playback_status = extract_string_var(&dictIter, &err);
