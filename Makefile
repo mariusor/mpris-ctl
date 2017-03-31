@@ -1,7 +1,7 @@
 BIN_NAME := mpris-ctl
 CC ?= gcc
 LIBS = dbus-1
-CFLAGS = -std=c99 -Wall -Wextra -g
+CFLAGS = -std=c99 -Wall -Wextra
 LDFLAGS =
 SOURCES = src/main.c
 DESTDIR = /
