@@ -15,12 +15,17 @@ char* get_zero_string(size_t length)
 
 char* str_replace(char* source, const char* search, const char* replace)
 {
-    size_t se_len = strlen(search);
-    size_t re_len = strlen(replace);
-    size_t so_len = strlen(source);
+    if (NULL == source) { return source; }
+    if (NULL == search) { return source; }
+    if (NULL == replace) { return source; }
 
+    size_t se_len = strlen(search);
     if (se_len == 0) { return source; }
+
+    size_t re_len = strlen(replace);
     if (re_len == 0) { return source; }
+
+    size_t so_len = strlen(source);
     if (so_len == 0) { return source; }
 
     size_t max_matches = so_len / se_len;

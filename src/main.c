@@ -31,7 +31,7 @@
 #define ARG_INFO_TRACK_LENGTH    "%track_length"
 #define ARG_INFO_ARTIST_NAME     "%artist_name"
 #define ARG_INFO_ALBUM_NAME      "%album_name"
-#define ARG_INFO_ALBUM_ARTISTS   "%album_artists"
+#define ARG_INFO_ALBUM_ARTIST    "%album_artist"
 #define ARG_INFO_BITRATE         "%bitrate"
 
 #define ARG_INFO_PLAYBACK_STATUS "%play_status"
@@ -62,7 +62,7 @@
 "\t%" ARG_INFO_TRACK_LENGTH "\tprints the track length (seconds)\n" \
 "\t%" ARG_INFO_ARTIST_NAME "\tprints the artist name\n" \
 "\t%" ARG_INFO_ALBUM_NAME "\tprints the album name\n" \
-"\t%" ARG_INFO_ALBUM_ARTISTS "\tprints the album artists (comma separated)\n" \
+"\t%" ARG_INFO_ALBUM_ARTIST "\tprints the album artist\n" \
 "\t%" ARG_INFO_PLAYBACK_STATUS "\tprints the playback status\n" \
 "\t%" ARG_INFO_SHUFFLE_MODE "\tprints the shuffle mode\n" \
 "\t%" ARG_INFO_VOLUME "\t\tprints the volume\n" \
@@ -156,7 +156,9 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
     output = str_replace(output, ARG_INFO_POSITION, pos_label);
     output = str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
-    //output = str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
+    output = str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
+    output = str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
+    output = str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
     output = str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
     output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);

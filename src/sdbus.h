@@ -61,13 +61,13 @@ typedef struct mpris_metadata {
     int bitrate;
     int disc_number;
     int length; // mpris specific
-    char** album_artist;
-    char** composer;
-    char** genre;
+    char* album_artist;
+    char* composer;
+    char* genre;
+    char* artist;
     char* comment;
     char* track_id;
     char* album;
-    char* artist;
     char* content_created;
     char* title;
     char* url;
@@ -226,6 +226,43 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     return result;
 }
 
+#define MAX_STRING 100
+#define MAX_COUNT 10
+char* extract_string_array_var(DBusMessageIter *iter, DBusError *error)
+{
+    char* result;
+    //char **result = malloc(sizeof(char*) * MAX_STRING * MAX_COUNT);
+    //if (!result)
+    //    return NULL;
+
+    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        return NULL;
+    }
+    DBusMessageIter variantIter;
+    dbus_message_iter_recurse(iter, &variantIter);
+
+    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_set_error_const(error, "variant_should_be_array", "This variant reply message must have array content");
+        return NULL;
+    }
+    DBusMessageIter arrayIter;
+    dbus_message_iter_recurse(&variantIter, &arrayIter);
+    //size_t arr_cnt = 0;
+    while (true) {
+        if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayIter)) {
+            dbus_message_iter_get_basic(&arrayIter, &result);
+            return result;
+            break;
+        }
+        if (!dbus_message_iter_has_next(&arrayIter)) {
+            break;
+        }
+        dbus_message_iter_next(&arrayIter);
+    }
+    return NULL;
+}
+
 mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
 {
     mpris_metadata track = {};
@@ -271,15 +308,15 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
                 track.track_id = extract_string_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_ALBUM_ARTIST, strlen(MPRIS_METADATA_ALBUM_ARTIST))) {
-                //track.album_artist = extract_string_var(&dictIter, error);
+                track.album_artist = extract_string_array_var(&dictIter, error);
             } else if (!strncmp(key, MPRIS_METADATA_ALBUM, strlen(MPRIS_METADATA_ALBUM))) {
                 track.album = extract_string_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_ARTIST, strlen(MPRIS_METADATA_ARTIST))) {
-                //track.artist = extract_string_var(&dictIter, error);
+                track.artist = extract_string_array_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_COMMENT, strlen(MPRIS_METADATA_COMMENT))) {
-                //track.comment = extract_string_var(&dictIter, error);
+                track.comment = extract_string_array_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_TITLE, strlen(MPRIS_METADATA_TITLE))) {
                 track.title = extract_string_var(&dictIter, error);
