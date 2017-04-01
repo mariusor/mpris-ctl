@@ -27,6 +27,7 @@ char* str_replace(char* source, const char* search, const char* replace)
 
     size_t so_len = strlen(source);
     if (so_len == 0) { return source; }
+    if (se_len > so_len) { return source; }
 
     size_t max_matches = so_len / se_len;
 

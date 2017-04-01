@@ -149,8 +149,8 @@ void print_mpris_info(mpris_properties *props, char* format)
     char* length_label = get_zero_string(char_size * 10);
     snprintf(length_label, 10, "%d", props->metadata.length);
 
-
     char* output = str_replace(format, "\\n", "\n");
+    output = str_replace(format, "\\t", "\t");
 
     output = str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
     output = str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
@@ -167,7 +167,11 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
 
     fprintf(stdout, "%s\n", output);
-    free(output);
+    //free(output);
+    //free(length_label);
+    //free(bitrate_label);
+    //free(track_number_label);
+    //free(volume_label);
 }
 
 int main(int argc, char** argv)
