@@ -31,19 +31,19 @@ Supported format specifiers for `mpris-ctl info` command:
 
 ```
 Format specifiers:
-	%track_name	prints the track name
+	%track_name     prints the track name
 	%track_number	prints the track number
 	%track_length	prints the track length (seconds)
 	%artist_name	prints the artist name
-	%album_name	prints the album name
+	%album_name	    prints the album name
 	%album_artist	prints the album artist
 	%play_status	prints the playback status
-	%shuffle	prints the shuffle mode
-	%volume		prints the volume
+	%shuffle	    prints the shuffle mode
+	%volume		    prints the volume
 	%loop_status	prints the loop status
-	%position	prints the song position (seconds)
-	%bitrate	prints the track's bitrate
-    %comment	prints the track's comment
+	%position	    prints the song position (seconds)
+	%bitrate	    prints the track's bitrate
+    %comment	    prints the track's comment
 ```
 
 Example: 
