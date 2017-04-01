@@ -33,6 +33,7 @@
 #define ARG_INFO_ALBUM_NAME      "%album_name"
 #define ARG_INFO_ALBUM_ARTIST    "%album_artist"
 #define ARG_INFO_BITRATE         "%bitrate"
+#define ARG_INFO_COMMENT         "%comment"
 
 #define ARG_INFO_PLAYBACK_STATUS "%play_status"
 #define ARG_INFO_SHUFFLE_MODE    "%shuffle"
@@ -69,6 +70,7 @@
 "\t%" ARG_INFO_LOOP_STATUS "\tprints the loop status\n" \
 "\t%" ARG_INFO_POSITION "\tprints the song position (seconds)\n" \
 "\t%" ARG_INFO_BITRATE "\tprints the track's bitrate\n" \
+"\t%" ARG_INFO_COMMENT "\tprints the track's comment\n" \
 ""
 
 const char* get_version()
@@ -162,6 +164,7 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
     output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
+    output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
 
     fprintf(stdout, "%s\n", output);
     free(output);
