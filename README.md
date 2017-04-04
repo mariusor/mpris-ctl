@@ -1,5 +1,9 @@
 # mpris-ctl 
 
+[![Build Status](https://travis-ci.org/mariusor/mpris-ctl.svg?branch=master)](https://travis-ci.org/mariusor/mpris-ctl)
+[![Coverity Scan Build Status](https://img.shields.io/coverity/scan/12309.svg)](https://scan.coverity.com/projects/mariusor-mpris-ctl)
+
+
 Is a minimalistic cli tool for controlling audio players exposing a MPRIS DBus interface, targeted at keyboard based WMs.
 
 Its only build/run dependency is on the [C dbus library](https://dbus.freedesktop.org/doc/api/html/index.html).
