@@ -20,7 +20,7 @@ before_install:
 addons:
   apt:
     packages:
-    - dbus
+    - libdbus-1-dev
 
   coverity_scan:
     project:
