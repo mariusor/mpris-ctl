@@ -1,7 +1,11 @@
 language: c
 
+
+dist: trusty
+sudo: false
+
 compiler:
-  - clang
+#  - clang
   - gcc
 
 script: make
@@ -14,6 +18,10 @@ before_install:
       - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
+  apt:
+    packages:
+    - dbus
+
   coverity_scan:
     project:
       name: "mariusor/mpris-ctl"
