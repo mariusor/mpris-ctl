@@ -21,7 +21,7 @@ ifneq ($(VERSION), )
 endif
 
 build:
-	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(SOURCES) -o$(BIN_NAME)
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
 
 .PHONY: clean
 clean:
