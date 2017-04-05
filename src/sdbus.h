@@ -149,6 +149,25 @@ double extract_double_var(DBusMessageIter *iter, DBusError *error)
     return result;
 }
 
+char* extract_object_path_var(DBusMessageIter *iter, DBusError *error)
+{
+    char* result;
+
+    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
+        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        return NULL;
+    }
+
+    DBusMessageIter variantIter;
+    dbus_message_iter_recurse(iter, &variantIter);
+    if (DBUS_TYPE_OBJECT_PATH != dbus_message_iter_get_arg_type(&variantIter) && DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_set_error_const(error, "variant_should_be_object_path", "This variant reply message must have an object path content");
+        return NULL;
+    }
+    dbus_message_iter_get_basic(&variantIter, &result);
+    return result;
+}
+
 char* extract_string_var(DBusMessageIter *iter, DBusError *error)
 {
     char* result;
@@ -226,12 +245,10 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     return result;
 }
 
-#define MAX_STRING 100
-#define MAX_COUNT 10
 char* extract_string_array_var(DBusMessageIter *iter, DBusError *error)
 {
     char* result;
-    //char **result = malloc(sizeof(char*) * MAX_STRING * MAX_COUNT);
+    //char *result = malloc(sizeof(char*) * MAX_STRING * MAX_COUNT);
     //if (!result)
     //    return NULL;
 
@@ -242,6 +259,10 @@ char* extract_string_array_var(DBusMessageIter *iter, DBusError *error)
     DBusMessageIter variantIter;
     dbus_message_iter_recurse(iter, &variantIter);
 
+    if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&variantIter)) {
+        dbus_message_iter_get_basic(&variantIter, &result);
+        return result;
+    }
     if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&variantIter)) {
         dbus_set_error_const(error, "variant_should_be_array", "This variant reply message must have array content");
         return NULL;
@@ -253,7 +274,6 @@ char* extract_string_array_var(DBusMessageIter *iter, DBusError *error)
         if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayIter)) {
             dbus_message_iter_get_basic(&arrayIter, &result);
             return result;
-            break;
         }
         if (!dbus_message_iter_has_next(&arrayIter)) {
             break;
@@ -305,7 +325,7 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
                 track.length = extract_int64_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_TRACKID, strlen(MPRIS_METADATA_TRACKID))) {
-                track.track_id = extract_string_var(&dictIter, error);
+                track.track_id = extract_object_path_var(&dictIter, error);
             }
             if (!strncmp(key, MPRIS_METADATA_ALBUM_ARTIST, strlen(MPRIS_METADATA_ALBUM_ARTIST))) {
                 track.album_artist = extract_string_array_var(&dictIter, error);
@@ -328,7 +348,7 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
                 track.url = extract_string_var(&dictIter, error);
             }
             if (dbus_error_is_set(error)) {
-                fprintf(stderr, "error: %s\n", error->message);
+                fprintf(stderr, "error: %s, %s\n", key, error->message);
                 dbus_error_free(error);
             }
         }
