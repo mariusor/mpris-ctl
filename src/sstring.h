@@ -23,7 +23,6 @@ char* str_replace(char* source, const char* search, const char* replace)
     if (se_len == 0) { return source; }
 
     size_t re_len = strlen(replace);
-    if (re_len == 0) { return source; }
 
     size_t so_len = strlen(source);
     if (so_len == 0) { return source; }
