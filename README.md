@@ -31,10 +31,22 @@ bindsym XF86AudioNext exec "mpris-ctl next"
 bindsym XF86AudioPrev exec "mpris-ctl prev"
 ````
 
+A more advanced example could be (this requires a notify daemon to be running):
+
+````
+set $mpris_notify notify-send "$(mpris-ctl info "%play_status\n%artist_name: %track_name")" "$(mpris-ctl info "Album: %album_name")"
+bindsym XF86AudioPlay exec mpris-ctl pp && $mpris_notify
+bindsym XF86AudioStop exec mpris-ctl stop && $mpris_notify
+bindsym XF86AudioNext exec mpris-ctl next && $mpris_notify
+bindsym XF86AudioPrev exec mpris-ctl prev && $mpris_notify
+````
+
+
 Supported format specifiers for `mpris-ctl info` command:
 
 ```
 Format specifiers:
+	%player_name	prints the player name
 	%track_name     prints the track name
 	%track_number	prints the track number
 	%track_length	prints the track length (seconds)
