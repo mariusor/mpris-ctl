@@ -3,13 +3,8 @@ language: c
 dist: trusty
 
 compiler:
-  - clang
   - gcc
-
-matrix:
-  exclude:
   - clang
-    co
 
 script: make
 
