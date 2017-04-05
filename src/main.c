@@ -26,6 +26,7 @@
 
 #define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
 
+#define ARG_INFO_PLAYER_NAME     "%player_name"
 #define ARG_INFO_TRACK_NAME      "%track_name"
 #define ARG_INFO_TRACK_NUMBER    "%track_number"
 #define ARG_INFO_TRACK_LENGTH    "%track_length"
@@ -58,6 +59,7 @@
 "\t" ARG_INFO "\t\t[format] Display information about the current track\n" \
 "\t\tdefault format \"%s\"\n" \
 "Format specifiers:\n" \
+"\t%" ARG_INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" ARG_INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" ARG_INFO_TRACK_NUMBER "\tprints the track number\n" \
 "\t%" ARG_INFO_TRACK_LENGTH "\tprints the track length (seconds)\n" \
@@ -165,6 +167,7 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
     output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
+    output = str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
 
     fprintf(stdout, "%s\n", output);
     //free(output);
@@ -233,7 +236,7 @@ int main(int argc, char** argv)
         goto _error;
     }
 
-    char* destination = get_player_name(conn);
+    char* destination = get_player_namespace(conn);
     if (strlen(destination) == 0) { goto _error; }
 
     if (NULL == dbus_property) {

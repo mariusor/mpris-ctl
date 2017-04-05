@@ -79,6 +79,7 @@ typedef struct mpris_properties {
     mpris_metadata metadata;
     double volume;
     int64_t position;
+    char* player_name;
     char* loop_status;
     char* playback_status;
     bool can_control;
@@ -317,10 +318,19 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
     return track;
 }
 
+char* get_player_name(char* full_namespace)
+{
+    // finds the 2 in MediaPlayer2 and moves forward 2 addresses in the string
+    char* name = strstr(full_namespace, "2");
+    name += 2;
+    return name;
+}
+
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
 {
     mpris_properties properties = {};
     properties.playback_status = "unknown";
+    properties.player_name = get_player_name(destination);
     if (NULL == conn) { return properties; }
 
     DBusMessage* msg;
@@ -453,7 +463,7 @@ char* get_dbus_string_scalar(DBusMessage* message)
     return status;
 }
 
-char* get_player_name(DBusConnection* conn)
+char* get_player_namespace(DBusConnection* conn)
 {
     if (NULL == conn) { return NULL; }
 
