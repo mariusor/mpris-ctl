@@ -170,11 +170,12 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
 
     fprintf(stdout, "%s\n", output);
-    //free(output);
-    //free(length_label);
-    //free(bitrate_label);
-    //free(track_number_label);
-    //free(volume_label);
+    free(output);
+    free(length_label);
+    free(bitrate_label);
+    free(track_number_label);
+    free(pos_label);
+    free(volume_label);
 }
 
 int main(int argc, char** argv)
