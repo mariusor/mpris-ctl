@@ -13,20 +13,22 @@ char* get_zero_string(size_t length)
     return result;
 }
 
-char* str_replace(char* source, const char* search, const char* replace)
+size_t str_replace(char* source, const char* search, const char* replace)
 {
-    if (NULL == source) { return source; }
-    if (NULL == search) { return source; }
-    if (NULL == replace) { return source; }
+    if (NULL == source) { return 0; }
+    size_t so_len = strlen(source);
+
+    if (so_len == 0) { return 0; }
+
+    if (NULL == search) { return so_len; }
+    if (NULL == replace) { return so_len; }
 
     size_t se_len = strlen(search);
-    if (se_len == 0) { return source; }
+    if (se_len == 0) { return so_len; }
 
     size_t re_len = strlen(replace);
 
-    size_t so_len = strlen(source);
-    if (so_len == 0) { return source; }
-    if (se_len > so_len) { return source; }
+    if (se_len > so_len) { return so_len; }
 
     size_t max_matches = so_len / se_len;
 
@@ -50,7 +52,7 @@ char* str_replace(char* source, const char* search, const char* replace)
         }
     }
     if (matches_cnt == 0) {
-        return source;
+        return so_len;
     }
 
     size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len);
@@ -78,6 +80,9 @@ char* str_replace(char* source, const char* search, const char* replace)
         strncpy(result + result_iterator, source + source_iterator, remaining_len);
         result_iterator += remaining_len;
     }
+    source = realloc(source, new_len);
+    strncpy(source, result, new_len);
+    free(result);
 
-    return result;
+    return new_len;
 }

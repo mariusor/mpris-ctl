@@ -151,23 +151,27 @@ void print_mpris_info(mpris_properties *props, char* format)
     char* length_label = get_zero_string(10);
     snprintf(length_label, 10, "%d", props->metadata.length);
 
-    char* output = str_replace(format, "\\n", "\n");
-    output = str_replace(format, "\\t", "\t");
+    size_t min_len = strlen(format);
+    char* output = get_zero_string(min_len);
+    strncpy(output, format, min_len);
 
-    output = str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
-    output = str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
-    output = str_replace(output, ARG_INFO_VOLUME, volume_label);
-    output = str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
-    output = str_replace(output, ARG_INFO_POSITION, pos_label);
-    output = str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
-    output = str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
-    output = str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
-    output = str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
-    output = str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
-    output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
-    output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
-    output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
-    output = str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
+    str_replace(output, "\\n", "\n");
+    str_replace(format, "\\t", "\t");
+
+    str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
+    str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
+    str_replace(output, ARG_INFO_VOLUME, volume_label);
+    str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
+    str_replace(output, ARG_INFO_POSITION, pos_label);
+    str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
+    str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
+    str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
+    str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
+    str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
+    str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
+    str_replace(output, ARG_INFO_BITRATE, bitrate_label);
+    str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
+    str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
 
     fprintf(stdout, "%s\n", output);
     free(output);
