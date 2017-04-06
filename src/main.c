@@ -230,7 +230,7 @@ int main(int argc, char** argv)
                                DBUS_NAME_FLAG_REPLACE_EXISTING,
                                &err);
     if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "Name error(%s)\n", err.message);
+        //fprintf(stderr, "Name error(%s)\n", err.message);
         dbus_error_free(&err);
     }
     if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) {

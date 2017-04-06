@@ -91,6 +91,44 @@ typedef struct mpris_properties {
     bool shuffle;
 } mpris_properties;
 
+void mpris_metadata_init(mpris_metadata* metadata)
+{
+    metadata->track_number = 0;
+    metadata->bitrate = 0;
+    metadata->disc_number = 0;
+    metadata->length = 0;
+    metadata->album_artist = "unknown";
+    metadata->composer = "unknown";
+    metadata->genre = "";
+    metadata->artist = "unknown";
+    metadata->comment = 0;
+    metadata->track_id = 0;
+    metadata->album = "unknown";
+    metadata->content_created = 0;
+    metadata->title = "unknown";
+    metadata->url = 0;
+    metadata->art_url = 0;
+    return;
+}
+
+void mpris_properties_init(mpris_properties *properties)
+{
+    mpris_metadata_init(&properties->metadata);
+    properties->volume = 0;
+    properties->position = 0;
+    properties->player_name = "unknown";
+    properties->loop_status = "unknown";
+    properties->playback_status = "unknown";
+    properties->can_control = false;
+    properties->can_go_next = false;
+    properties->can_go_previous = false;
+    properties->can_play = false;
+    properties->can_pause = false;
+    properties->can_seek = false;
+    properties->shuffle = false;
+    return;
+}
+
 DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
 {
     if (NULL == conn) { return NULL; }
@@ -104,11 +142,11 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
-        fprintf(stderr, "Out Of Memory!\n");
+        //fprintf(stderr, "Out Of Memory!\n");
         return NULL;
     }
     if (NULL == pending) {
-        fprintf(stderr, "Pending Call Null\n");
+        //fprintf(stderr, "Pending Call Null\n");
         return NULL;
     }
 
@@ -122,7 +160,7 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
     if (NULL == reply) {
-        fprintf(stderr, "Reply Null\n");
+        //fprintf(stderr, "Reply Null\n");
     }
 
     // free the pending message handle
@@ -133,7 +171,7 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 
 double extract_double_var(DBusMessageIter *iter, DBusError *error)
 {
-    double result;
+    double result = 0;
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
@@ -188,7 +226,7 @@ char* extract_string_var(DBusMessageIter *iter, DBusError *error)
 
 int32_t extract_int32_var(DBusMessageIter *iter, DBusError *error)
 {
-    int32_t result;
+    int32_t result = 0;
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return 0;
@@ -206,7 +244,7 @@ int32_t extract_int32_var(DBusMessageIter *iter, DBusError *error)
 
 int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
 {
-    int64_t result;
+    int64_t result = 0;
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
         return 0;
@@ -224,7 +262,7 @@ int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
 
 bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
 {
-    bool *result;
+    bool *result = false;
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
@@ -244,6 +282,7 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
 mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
 {
     mpris_metadata track = {};
+    mpris_metadata_init(&track);
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
@@ -306,7 +345,7 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
                 track.url = extract_string_var(&dictIter, error);
             }
             if (dbus_error_is_set(error)) {
-                fprintf(stderr, "error: %s, %s\n", key, error->message);
+                //fprintf(stderr, "error: %s, %s\n", key, error->message);
                 dbus_error_free(error);
             }
         }
@@ -329,8 +368,9 @@ char* get_player_name(char* full_namespace)
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
 {
     mpris_properties properties = {};
-    properties.playback_status = "unknown";
+    mpris_properties_init(&properties);
     properties.player_name = get_player_name(destination);
+
     if (NULL == conn) { return properties; }
 
     DBusMessage* msg;
@@ -349,15 +389,15 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     // append interface we want to get the property from
     dbus_message_iter_init_append(msg, &params);
     if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_interface)) {
-        fprintf(stderr, "Out Of Memory!\n");
+        //fprintf(stderr, "Out Of Memory!\n");
     }
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
-        fprintf(stderr, "Out Of Memory!\n");
+        //fprintf(stderr, "Out Of Memory!\n");
     }
     if (NULL == pending) {
-        fprintf(stderr, "Pending Call Null\n");
+        //fprintf(stderr, "Pending Call Null\n");
     }
 
     // free message
@@ -370,7 +410,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
     if (NULL == reply) {
-        fprintf(stderr, "Reply Null\n");
+        //fprintf(stderr, "Reply Null\n");
     }
 
     // free the pending message handle
@@ -434,7 +474,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
                      properties.volume = extract_double_var(&dictIter, &err);
                 }
                 if (dbus_error_is_set(&err)) {
-                    fprintf(stderr, "error: %s\n", err.message);
+                    //fprintf(stderr, "error: %s\n", err.message);
                     dbus_error_free(&err);
                 }
             }
@@ -451,7 +491,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
 char* get_dbus_string_scalar(DBusMessage* message)
 {
     if (NULL == message) { return NULL; }
-    char* status;
+    char* status = NULL;
 
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(message, &rootIter) &&
@@ -467,7 +507,7 @@ char* get_player_namespace(DBusConnection* conn)
 {
     if (NULL == conn) { return NULL; }
 
-    char* player_name = "";
+    char* player_namespace = NULL;
 
     char* method = DBUS_METHOD_LIST_NAMES;
     char* destination = DBUS_DESTINATION;
@@ -488,7 +528,7 @@ char* get_player_namespace(DBusConnection* conn)
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
-                    player_name = str;
+                    player_namespace = str;
                     break;
                 }
             }
@@ -499,5 +539,5 @@ char* get_player_namespace(DBusConnection* conn)
         }
     }
 
-    return player_name;
+    return player_namespace;
 }
