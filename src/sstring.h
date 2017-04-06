@@ -4,20 +4,10 @@
 
 #include <string.h>
 
-size_t zero_string(char* source, size_t length)
-{
-    if (NULL == source) return 0;
-    size_t zeroes = 0;
-    for (size_t i = 0; i < length; i++) {
-        if (source[i]) { zeroes++; source[i] = (char)0; }
-    }
-    return zeroes;
-}
-
 char* get_zero_string(size_t length)
 {
     char* result = (char*)malloc(sizeof(char*) * (length + 1));
-    zero_string(result, length + 1);
+    memset(result, 0, length + 1);
     return result;
 }
 
@@ -43,7 +33,7 @@ size_t str_replace(char* source, const char* search, const char* replace)
     size_t matches[max_matches];
     size_t matches_cnt = 0;
     // get the number of matches for replace in source
-    for (size_t so_i = 0; so_i < so_len - se_len + 1; so_i++) {
+    for (size_t so_i = 0; so_i < so_len; so_i++) {
         size_t se_i = 0;
         size_t matched = 0;
         while (se_i < se_len) {
@@ -90,9 +80,11 @@ size_t str_replace(char* source, const char* search, const char* replace)
         strncpy(result + result_iterator, source + source_iterator, remaining_len);
         result_iterator += remaining_len;
     }
+    if (new_len + 1 > so_len) {
+        source = realloc(source, new_len + 1);
+    }
     // copy back the temp string to source and free it
-    source = realloc(source, new_len + 1);
-    zero_string(source, new_len + 1);
+    memset(source, 0, new_len+1);
     strncpy(source, result, new_len);
 
     if (result) { free(result); }
