@@ -1,8 +1,13 @@
 BIN_NAME := mpris-ctl
-CC ?= gcc
+CC ?= g++
 LIBS = dbus-1
-CFLAGS = -std=c99 -Wall -Wextra
-LDFLAGS =
+COMPILE_FLAGS = -std=c99 -Wall -Wextra -g
+LINK_FLAGS =
+RCOMPILE_FLAGS = -D NDEBUG
+DCOMPILE_FLAGS = -ggdb -D DEBUG
+RLINK_FLAGS =
+DLINK_FLAGS =
+
 SOURCES = src/main.c
 DESTDIR = /
 INSTALL_PREFIX = usr/local
@@ -12,6 +17,11 @@ ifneq ($(LIBS),)
 	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
+release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
+release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
+debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
+
 ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 	VERSION := $(shell git describe --tags --long --dirty=-git --always )
 	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION)\"
@@ -19,6 +29,12 @@ endif
 ifneq ($(VERSION), )
 	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION)\"
 endif
+
+.PHONY: release
+release: build
+
+.PHONY: debug
+debug: build
 
 build:
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
