@@ -4,12 +4,20 @@
 
 #include <string.h>
 
+size_t zero_string(char* source, size_t length)
+{
+    if (NULL == source) return 0;
+    size_t zeroes = 0;
+    for (size_t i = 0; i < length; i++) {
+        if (source[i]) { zeroes++; source[i] = (char)0; }
+    }
+    return zeroes;
+}
+
 char* get_zero_string(size_t length)
 {
     char* result = (char*)malloc(sizeof(char*) * (length + 1));
-    for (size_t i = 0; i <= length; i++) {
-        result[i] = (char)0;
-    }
+    zero_string(result, length + 1);
     return result;
 }
 
@@ -34,10 +42,11 @@ size_t str_replace(char* source, const char* search, const char* replace)
 
     size_t matches[max_matches];
     size_t matches_cnt = 0;
-    for (size_t so_i = 0; so_i < so_len; so_i++) {
+    // get the number of matches for replace in source
+    for (size_t so_i = 0; so_i < so_len - se_len + 1; so_i++) {
         size_t se_i = 0;
         size_t matched = 0;
-        while(se_i < se_len) {
+        while (se_i < se_len) {
             if (search[se_i] == source[so_i + se_i]) {
                 matched++;
             } else {
@@ -55,6 +64,7 @@ size_t str_replace(char* source, const char* search, const char* replace)
         return so_len;
     }
 
+    // use new string of the correct length
     size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len);
     char* result = get_zero_string(new_len);
 
@@ -74,15 +84,18 @@ size_t str_replace(char* source, const char* search, const char* replace)
         result_iterator += re_len;
 
     }
+    // copy the remaining end of source
     if (source_iterator < so_len) {
-        // copy end of string
         size_t remaining_len = so_len - source_iterator;
         strncpy(result + result_iterator, source + source_iterator, remaining_len);
         result_iterator += remaining_len;
     }
-    source = realloc(source, new_len);
+    // copy back the temp string to source and free it
+    source = realloc(source, new_len + 1);
+    zero_string(source, new_len + 1);
     strncpy(source, result, new_len);
-    free(result);
+
+    if (result) { free(result); }
 
     return new_len;
 }
