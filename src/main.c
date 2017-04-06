@@ -13,6 +13,7 @@
 #include "sstring.h"
 
 #define char_size       sizeof(char*)
+#define MAX_OUTPUT_LENGTH 1024
 
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"
@@ -25,6 +26,21 @@
 #define ARG_INFO        "info"
 
 #define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
+#define ARG_INFO_FULL_STATUS    "Player name:\t%player_name\n" \
+    "Play status:\t%play_status\n" \
+    "Track:\t\t%track_name\n" \
+    "Artist:\t\t%artist_name\n" \
+    "Album:\t\t%album_name\n" \
+    "Album Artist:\t%album_artist\n" \
+    "Track:\t\t%track_number\n" \
+    "Length:\t\t%track_length\n" \
+    "Volume:\t\t%volume\n" \
+    "Loop status:\t%loop_status\n" \
+    "Shuffle:\t%shuffle\n" \
+    "Position:\t%position\n" \
+    "Bitrate:\t%bitrate\n" \
+/*    "Comment:\t%comment" */ \
+    ""
 
 #define ARG_INFO_PLAYER_NAME     "%player_name"
 #define ARG_INFO_TRACK_NAME      "%track_name"
@@ -42,6 +58,8 @@
 #define ARG_INFO_LOOP_STATUS     "%loop_status"
 #define ARG_INFO_POSITION        "%position"
 
+#define ARG_INFO_FULL            "%full"
+
 #define TRUE_LABEL      "true"
 #define FALSE_LABEL     "false"
 
@@ -55,14 +73,14 @@
 "\t" ARG_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" ARG_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
 "\t" ARG_STATUS "\t\tGet the playback status\n" \
-"\t\tequivalent to " ARG_INFO " \"%s\"\n" \
-"\t" ARG_INFO "\t\t[format] Display information about the current track\n" \
-"\t\tdefault format \"%s\"\n" \
+"\t\t\t- equivalent to " ARG_INFO " \"%s\"\n" \
+"\t" ARG_INFO "\t\t<format> Display information about the current track\n" \
+"\t\t\t- default value\"%s\"\n\n" \
 "Format specifiers:\n" \
 "\t%" ARG_INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" ARG_INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" ARG_INFO_TRACK_NUMBER "\tprints the track number\n" \
-"\t%" ARG_INFO_TRACK_LENGTH "\tprints the track length (seconds)\n" \
+"\t%" ARG_INFO_TRACK_LENGTH "\tprints the track length (useconds)\n" \
 "\t%" ARG_INFO_ARTIST_NAME "\tprints the artist name\n" \
 "\t%" ARG_INFO_ALBUM_NAME "\tprints the album name\n" \
 "\t%" ARG_INFO_ALBUM_ARTIST "\tprints the album artist\n" \
@@ -70,9 +88,10 @@
 "\t%" ARG_INFO_SHUFFLE_MODE "\tprints the shuffle mode\n" \
 "\t%" ARG_INFO_VOLUME "\t\tprints the volume\n" \
 "\t%" ARG_INFO_LOOP_STATUS "\tprints the loop status\n" \
-"\t%" ARG_INFO_POSITION "\tprints the song position (seconds)\n" \
+"\t%" ARG_INFO_POSITION "\tprints the song position (useconds)\n" \
 "\t%" ARG_INFO_BITRATE "\tprints the track's bitrate\n" \
 "\t%" ARG_INFO_COMMENT "\tprints the track's comment\n" \
+"\t%" ARG_INFO_FULL "\t\tprints all available information\n" \
 ""
 
 const char* get_version()
@@ -139,25 +158,26 @@ void print_help(char* name)
 
 void print_mpris_info(mpris_properties *props, char* format)
 {
+    const char* info_full = ARG_INFO_FULL_STATUS;
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
     char* volume_label = get_zero_string(4);
-    snprintf(volume_label, 30, "%.2f", props->volume);
+    snprintf(volume_label, 20, "%.2f", props->volume);
     char* pos_label = get_zero_string(10);
-    snprintf(pos_label, 10, "%" PRId64, props->position);
+    snprintf(pos_label, 20, "%" PRId64, props->position);
     char* track_number_label = get_zero_string(3);
     snprintf(track_number_label, 3, "%d", props->metadata.track_number);
     char* bitrate_label = get_zero_string(5);
     snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
     char* length_label = get_zero_string(10);
-    snprintf(length_label, 10, "%d", props->metadata.length);
+    snprintf(length_label, 20, "%d", props->metadata.length);
 
-    size_t min_len = strlen(format);
-    char* output = get_zero_string(min_len);
-    strncpy(output, format, min_len);
+    char* output = get_zero_string(MAX_OUTPUT_LENGTH);
+    strncpy(output, format, MAX_OUTPUT_LENGTH);
 
     str_replace(output, "\\n", "\n");
-    str_replace(format, "\\t", "\t");
+    str_replace(output, "\\t", "\t");
 
+    str_replace(output, ARG_INFO_FULL, info_full);
     str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
     str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
     str_replace(output, ARG_INFO_VOLUME, volume_label);
@@ -165,8 +185,8 @@ void print_mpris_info(mpris_properties *props, char* format)
     str_replace(output, ARG_INFO_POSITION, pos_label);
     str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
     str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
-    str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
     str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
+    str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
     str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
     str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     str_replace(output, ARG_INFO_BITRATE, bitrate_label);
@@ -242,6 +262,7 @@ int main(int argc, char** argv)
     }
 
     char* destination = get_player_namespace(conn);
+    if (NULL == destination ) { goto _error; }
     if (strlen(destination) == 0) { goto _error; }
 
     if (NULL == dbus_property) {
