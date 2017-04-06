@@ -6,8 +6,8 @@
 
 char* get_zero_string(size_t length)
 {
-    char* result = (char*)malloc(sizeof(char*) * (length));
-    for (size_t i = 0; i < length; i++) {
+    char* result = (char*)malloc(sizeof(char*) * (length + 1));
+    for (size_t i = 0; i <= length; i++) {
         result[i] = (char)0;
     }
     return result;
@@ -53,7 +53,7 @@ char* str_replace(char* source, const char* search, const char* replace)
         return source;
     }
 
-    size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len) + 1;
+    size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len);
     char* result = get_zero_string(new_len);
 
     size_t source_iterator = 0;

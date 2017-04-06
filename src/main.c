@@ -140,15 +140,15 @@ void print_help(char* name)
 void print_mpris_info(mpris_properties *props, char* format)
 {
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
-    char* volume_label = get_zero_string(char_size * 4);
+    char* volume_label = get_zero_string(4);
     snprintf(volume_label, 30, "%.2f", props->volume);
-    char* pos_label = get_zero_string(char_size * 10);
+    char* pos_label = get_zero_string(10);
     snprintf(pos_label, 10, "%" PRId64, props->position);
-    char* track_number_label = get_zero_string(char_size * 3);
+    char* track_number_label = get_zero_string(3);
     snprintf(track_number_label, 3, "%d", props->metadata.track_number);
-    char* bitrate_label = get_zero_string(char_size * 5);
+    char* bitrate_label = get_zero_string(5);
     snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
-    char* length_label = get_zero_string(char_size * 10);
+    char* length_label = get_zero_string(10);
     snprintf(length_label, 10, "%d", props->metadata.length);
 
     char* output = str_replace(format, "\\n", "\n");
