@@ -99,9 +99,9 @@ void mpris_metadata_init(mpris_metadata* metadata)
     metadata->length = 0;
     metadata->album_artist = "unknown";
     metadata->composer = "unknown";
-    metadata->genre = "";
+    metadata->genre = "unknown";
     metadata->artist = "unknown";
-    metadata->comment = 0;
+    metadata->comment = "";
     metadata->track_id = 0;
     metadata->album = "unknown";
     metadata->content_created = 0;
