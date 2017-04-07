@@ -6,7 +6,7 @@
 
 char* get_zero_string(size_t length)
 {
-    char* result = (char*)malloc(sizeof(char*) * (length + 1));
+    char* result = (char*)malloc(sizeof(char) * (length + 1));
     memset(result, 0, length + 1);
     return result;
 }
@@ -87,7 +87,7 @@ size_t str_replace(char* source, const char* search, const char* replace)
     memset(source, 0, new_len+1);
     strncpy(source, result, new_len);
 
-    if (result) { free(result); }
+    free(result);
 
     return new_len;
 }
