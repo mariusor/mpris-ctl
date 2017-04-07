@@ -39,7 +39,7 @@
     "Shuffle:\t%shuffle\n" \
     "Position:\t%position\n" \
     "Bitrate:\t%bitrate\n" \
-/*    "Comment:\t%comment" */ \
+    /*"Comment:\t%comment"*/ \
     ""
 
 #define ARG_INFO_PLAYER_NAME     "%player_name"
@@ -90,7 +90,7 @@
 "\t%" ARG_INFO_LOOP_STATUS "\tprints the loop status\n" \
 "\t%" ARG_INFO_POSITION "\tprints the song position (useconds)\n" \
 "\t%" ARG_INFO_BITRATE "\tprints the track's bitrate\n" \
-"\t%" ARG_INFO_COMMENT "\tprints the track's comment\n" \
+/*"\t%" ARG_INFO_COMMENT "\tprints the track's comment\n"*/ \
 "\t%" ARG_INFO_FULL "\t\tprints all available information\n" \
 ""
 
@@ -178,6 +178,8 @@ void print_mpris_info(mpris_properties *props, char* format)
     str_replace(output, "\\t", "\t");
 
     str_replace(output, ARG_INFO_FULL, info_full);
+
+    str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
     str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
     str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
     str_replace(output, ARG_INFO_VOLUME, volume_label);
@@ -190,8 +192,7 @@ void print_mpris_info(mpris_properties *props, char* format)
     str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
     str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     str_replace(output, ARG_INFO_BITRATE, bitrate_label);
-    str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
-    str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
+    //str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
 
     fprintf(stdout, "%s\n", output);
     free(output);
