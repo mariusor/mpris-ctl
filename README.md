@@ -58,7 +58,6 @@ Format specifiers:
     %loop_status     prints the loop status
     %position        prints the song position (seconds)
     %bitrate         prints the track's bitrate
-    %comment         prints the track's comment
     %full            prints all available information
 
 ```
