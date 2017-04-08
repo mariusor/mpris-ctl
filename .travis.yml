@@ -5,7 +5,7 @@ dist: trusty
 compiler:
   - clang
 
-script: make release 
+script: make release
 
 env:
   global:
