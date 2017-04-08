@@ -23,21 +23,21 @@
 #define ARG_INFO        "info"
 
 #define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
-#define ARG_INFO_FULL_STATUS    "Player name:\t%player_name\n" \
-    "Play status:\t" ARG_INFO_PLAYER_NAME "\n" \
-    "Track:\t\t" ARG_INFO_TRACK_NAME "\n" \
-    "Artist:\t\t" ARG_INFO_ARTIST_NAME "\n" \
-    "Album:\t\t" ARG_INFO_AKBUM_NAME "\n" \
-    "Album Artist:\t" ARG_INFO_ALBUM_ARTIST "\n" \
-    "Track:\t\t" ARG_INFO_TRACK_NUMBER "\n" \
-    "Length:\t\t" ARG_INFO_TRACK_LENGTH "\n" \
-    "Volume:\t\t" ARG_INFO_VOLUME "\n" \
-    "Loop status:\t" ARG_INFO_LOOP_STATUS "\n" \
-    "Shuffle:\t" ARG_INFO_SHUFFLE_MODE "\n" \
-    "Position:\t" ARG_INFO_POSITION "\n" \
-    "Bitrate:\t" ARG_INFO_BITRATE "\n" \
-    "Comment:\t" ARG_INFO_COMMENT " \
-    ""
+#define ARG_INFO_FULL_STATUS    "Player name:\t" ARG_INFO_PLAYER_NAME "\n" \
+"Play status:\t" ARG_INFO_PLAYBACK_STATUS "\n" \
+"Track:\t\t" ARG_INFO_TRACK_NAME "\n" \
+"Artist:\t\t" ARG_INFO_ARTIST_NAME "\n" \
+"Album:\t\t" ARG_INFO_ALBUM_NAME "\n" \
+"Album Artist:\t" ARG_INFO_ALBUM_ARTIST "\n" \
+"Track:\t\t" ARG_INFO_TRACK_NUMBER "\n" \
+"Length:\t\t" ARG_INFO_TRACK_LENGTH "\n" \
+"Volume:\t\t" ARG_INFO_VOLUME "\n" \
+"Loop status:\t" ARG_INFO_LOOP_STATUS "\n" \
+"Shuffle:\t" ARG_INFO_SHUFFLE_MODE "\n" \
+"Position:\t" ARG_INFO_POSITION "\n" \
+"Bitrate:\t" ARG_INFO_BITRATE "\n" \
+"Comment:\t" ARG_INFO_COMMENT \
+""
 
 #define ARG_INFO_PLAYER_NAME     "%player_name"
 #define ARG_INFO_TRACK_NAME      "%track_name"
