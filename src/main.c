@@ -211,13 +211,9 @@ int main(int argc, char** argv)
     if (strcmp(command, ARG_HELP) == 0) {
         goto _help;
     }
-    char *info_format;
-    if (strcmp(command, ARG_INFO) == 0) {
-        if (argc > 2) {
-            info_format = argv[2];
-        } else {
-            info_format = ARG_INFO_DEFAULT_STATUS;
-        }
+    char *info_format = ARG_INFO_DEFAULT_STATUS;
+    if (strcmp(command, ARG_INFO) == 0 && argc > 2) {
+        info_format = argv[2];
     }
     if (strcmp(command, ARG_STATUS) == 0) {
         info_format = ARG_INFO_PLAYBACK_STATUS;
