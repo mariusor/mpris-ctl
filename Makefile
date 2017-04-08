@@ -17,27 +17,23 @@ ifneq ($(LIBS),)
 	LDFLAGS += $(shell pkg-config --libs $(LIBS))
 endif
 
-release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
-release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
-debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
-debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
-
 ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 	VERSION := $(shell git describe --tags --long --dirty=-git --always )
-	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION)\"
 endif
 ifneq ($(VERSION), )
 	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION)\"
 endif
+
+release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
+release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
+debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 
 .PHONY: release
 release: build
 
 .PHONY: debug
 debug: build
-
-build:
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
 
 .PHONY: clean
 clean:
@@ -50,3 +46,6 @@ install:
 .PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
+
+build: $(BIN_NAME) 
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
