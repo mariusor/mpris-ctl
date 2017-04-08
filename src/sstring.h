@@ -3,9 +3,7 @@
  */
 
 #include <string.h>
-#include <stdio.h>
 
-//#define MAX_OUTPUT_LENGTH 1048576
 #define MAX_OUTPUT_LENGTH 1024
 
 char* get_zero_string(size_t length)
@@ -17,7 +15,6 @@ char* str_replace(char* source, const char* search, const char* replace)
 {
     if (NULL == source) { return source; }
     size_t so_len = strlen(source);
-    fprintf(stderr, "%p\n", source);
 
     if (so_len == 0) { return 0; }
 
