@@ -12,9 +12,6 @@
 #include "sdbus.h"
 #include "sstring.h"
 
-#define char_size       sizeof(char*)
-#define MAX_OUTPUT_LENGTH 1024
-
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"
 #define ARG_PAUSE       "pause"
@@ -27,19 +24,19 @@
 
 #define ARG_INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
 #define ARG_INFO_FULL_STATUS    "Player name:\t%player_name\n" \
-    "Play status:\t%play_status\n" \
-    "Track:\t\t%track_name\n" \
-    "Artist:\t\t%artist_name\n" \
-    "Album:\t\t%album_name\n" \
-    "Album Artist:\t%album_artist\n" \
-    "Track:\t\t%track_number\n" \
-    "Length:\t\t%track_length\n" \
-    "Volume:\t\t%volume\n" \
-    "Loop status:\t%loop_status\n" \
-    "Shuffle:\t%shuffle\n" \
-    "Position:\t%position\n" \
-    "Bitrate:\t%bitrate\n" \
-    "Comment:\t%comment" \
+    "Play status:\t" ARG_INFO_PLAYER_NAME "\n" \
+    "Track:\t\t" ARG_INFO_TRACK_NAME "\n" \
+    "Artist:\t\t" ARG_INFO_ARTIST_NAME "\n" \
+    "Album:\t\t" ARG_INFO_AKBUM_NAME "\n" \
+    "Album Artist:\t" ARG_INFO_ALBUM_ARTIST "\n" \
+    "Track:\t\t" ARG_INFO_TRACK_NUMBER "\n" \
+    "Length:\t\t" ARG_INFO_TRACK_LENGTH "\n" \
+    "Volume:\t\t" ARG_INFO_VOLUME "\n" \
+    "Loop status:\t" ARG_INFO_LOOP_STATUS "\n" \
+    "Shuffle:\t" ARG_INFO_SHUFFLE_MODE "\n" \
+    "Position:\t" ARG_INFO_POSITION "\n" \
+    "Bitrate:\t" ARG_INFO_BITRATE "\n" \
+    "Comment:\t" ARG_INFO_COMMENT " \
     ""
 
 #define ARG_INFO_PLAYER_NAME     "%player_name"
@@ -174,25 +171,25 @@ void print_mpris_info(mpris_properties *props, char* format)
     char* output = get_zero_string(MAX_OUTPUT_LENGTH);
     strncpy(output, format, MAX_OUTPUT_LENGTH);
 
-    str_replace(output, "\\n", "\n");
-    str_replace(output, "\\t", "\t");
+    output = str_replace(output, "\\n", "\n");
+    output = str_replace(output, "\\t", "\t");
 
-    str_replace(output, ARG_INFO_FULL, info_full);
+    output = str_replace(output, ARG_INFO_FULL, info_full);
 
-    str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
-    str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
-    str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
-    str_replace(output, ARG_INFO_VOLUME, volume_label);
-    str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
-    str_replace(output, ARG_INFO_POSITION, pos_label);
-    str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
-    str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
-    str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
-    str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
-    str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
-    str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
-    str_replace(output, ARG_INFO_BITRATE, bitrate_label);
-    str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
+    output = str_replace(output, ARG_INFO_PLAYER_NAME, props->player_name);
+    output = str_replace(output, ARG_INFO_SHUFFLE_MODE, shuffle_label);
+    output = str_replace(output, ARG_INFO_PLAYBACK_STATUS, props->playback_status);
+    output = str_replace(output, ARG_INFO_VOLUME, volume_label);
+    output = str_replace(output, ARG_INFO_LOOP_STATUS, props->loop_status);
+    output = str_replace(output, ARG_INFO_POSITION, pos_label);
+    output = str_replace(output, ARG_INFO_TRACK_NAME, props->metadata.title);
+    output = str_replace(output, ARG_INFO_ARTIST_NAME, props->metadata.artist);
+    output = str_replace(output, ARG_INFO_ALBUM_ARTIST, props->metadata.album_artist);
+    output = str_replace(output, ARG_INFO_ALBUM_NAME, props->metadata.album);
+    output = str_replace(output, ARG_INFO_TRACK_LENGTH, length_label);
+    output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
+    output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
+    output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
 
     fprintf(stdout, "%s\n", output);
     free(output);

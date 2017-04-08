@@ -3,28 +3,33 @@
  */
 
 #include <string.h>
+#include <stdio.h>
+
+//#define MAX_OUTPUT_LENGTH 1048576
+#define MAX_OUTPUT_LENGTH 1024
 
 char* get_zero_string(size_t length)
 {
     return (char*)calloc(1, sizeof(char) * (length + 1));
 }
 
-size_t str_replace(char* source, const char* search, const char* replace)
+char* str_replace(char* source, const char* search, const char* replace)
 {
-    if (NULL == source) { return 0; }
+    if (NULL == source) { return source; }
     size_t so_len = strlen(source);
+    fprintf(stderr, "%p\n", source);
 
     if (so_len == 0) { return 0; }
 
-    if (NULL == search) { return so_len; }
-    if (NULL == replace) { return so_len; }
+    if (NULL == search) { return source; }
+    if (NULL == replace) { return source; }
 
     size_t se_len = strlen(search);
-    if (se_len == 0) { return so_len; }
+    if (se_len == 0) { return source; }
 
     size_t re_len = strlen(replace);
 
-    if (se_len > so_len) { return so_len; }
+    if (se_len > so_len) { return source; }
 
     size_t max_matches = so_len / se_len;
 
@@ -35,7 +40,7 @@ size_t str_replace(char* source, const char* search, const char* replace)
         size_t se_i = 0;
         size_t matched = 0;
         while (se_i < se_len) {
-            if (search[se_i] == source[so_i + se_i]) {
+            if (search[se_i] == (source)[so_i + se_i]) {
                 matched++;
             } else {
                 break;
@@ -49,12 +54,15 @@ size_t str_replace(char* source, const char* search, const char* replace)
         }
     }
     if (matches_cnt == 0) {
-        return so_len;
+        return source;
     }
 
     // use new string of the correct length
     size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len);
-    char* result = calloc(1, new_len);
+    char* result = get_zero_string(new_len);
+    if (NULL == result) {
+        return source;
+    }
 
     size_t source_iterator = 0;
     size_t result_iterator = 0;
@@ -78,12 +86,7 @@ size_t str_replace(char* source, const char* search, const char* replace)
         strncpy(result + result_iterator, source + source_iterator, remaining_len);
         result_iterator += remaining_len;
     }
+    // we free the old string mem
     free(source);
-    source = get_zero_string(new_len);
-    // copy back the temp string to source and free it
-    strncpy(source, result, new_len);
-
-    free(result);
-
-    return new_len;
+    return result;
 }
