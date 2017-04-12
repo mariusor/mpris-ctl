@@ -5,7 +5,11 @@ dist: trusty
 compiler:
   - clang
 
-script: make release
+script:
+    - make check_leak
+    - make check_memory
+    - make check_thread
+    - make check_undefined
 
 env:
   global:

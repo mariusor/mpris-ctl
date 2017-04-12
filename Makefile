@@ -1,5 +1,5 @@
 BIN_NAME := mpris-ctl
-CC ?= gcc
+CC ?= clang
 LIBS = dbus-1
 COMPILE_FLAGS = -std=c99 -Wall -Wextra
 LINK_FLAGS =
@@ -32,6 +32,45 @@ debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 .PHONY: all
 all: release
 
+check_leak: export CC := clang
+check_leak: DCOMPILE_FLAGS += -fsanitize=address -fPIE
+check_leak: DLINK_FLAGS += -pie
+check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+check_leak: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
+
+check_thread: export CC := clang
+check_thread: DCOMPILE_FLAGS += -fsanitize=thread -lpthread -fPIE
+check_thread: DLINK_FLAGS += -pie
+check_thread: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+check_thread: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
+
+check_memory: export CC := clang
+check_memory: DCOMPILE_FLAGS += -fsanitize=memory -fPIE
+check_memory: DLINK_FLAGS += -pie
+check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+check_memory: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
+
+check_undefined: export CC := clang
+check_undefined: DCOMPILE_FLAGS += -fsanitize=undefined -fPIE
+check_undefined: DLINK_FLAGS += -pie
+check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
+check_undefined: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
+
+.PHONY: check_leak
+check_leak: clean executable run
+
+.PHONY: check_thread
+check_thread: clean executable run
+
+.PHONY: check_memory
+check_memory: clean executable run
+
+.PHONY: check_undefined
+check_undefined: clean executable run
+
+run: $(BIN_NAME)
+	./$(BIN_NAME) info %full
+
 .PHONY: release
 release: executable
 
@@ -43,7 +82,7 @@ executable:
 
 .PHONY: clean
 clean:
-	@$(RM) $(BIN_NAME)
+	$(RM) $(BIN_NAME)
 
 .PHONY: install
 install:
