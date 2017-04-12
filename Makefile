@@ -1,7 +1,7 @@
 BIN_NAME := mpris-ctl
-CC ?= g++
+CC ?= gcc
 LIBS = dbus-1
-COMPILE_FLAGS = -std=c99 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c99 -Wall -Wextra
 LINK_FLAGS =
 RCOMPILE_FLAGS = -D NDEBUG
 DCOMPILE_FLAGS = -ggdb -D DEBUG -O1
