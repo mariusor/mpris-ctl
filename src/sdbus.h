@@ -108,12 +108,11 @@ void mpris_metadata_init(mpris_metadata* metadata)
     metadata->title = "unknown";
     metadata->url = 0;
     metadata->art_url = 0;
-    return;
 }
 
 void mpris_properties_init(mpris_properties *properties)
 {
-    mpris_metadata_init(&properties->metadata);
+    mpris_metadata_init(&(properties->metadata));
     properties->volume = 0;
     properties->position = 0;
     properties->player_name = "unknown";
@@ -126,7 +125,12 @@ void mpris_properties_init(mpris_properties *properties)
     properties->can_pause = false;
     properties->can_seek = false;
     properties->shuffle = false;
-    return;
+}
+
+void mpris_properties_unref(mpris_properties *properties)
+{
+    free(&(properties->metadata));
+    free(properties);
 }
 
 DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
@@ -143,12 +147,15 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
         //fprintf(stderr, "Out Of Memory!\n");
+        dbus_message_unref(msg);
         return NULL;
     }
     if (NULL == pending) {
         //fprintf(stderr, "Pending Call Null\n");
+        dbus_message_unref(msg);
         return NULL;
     }
+    dbus_connection_flush(conn);
 
     // free message
     dbus_message_unref(msg);
@@ -165,6 +172,7 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 
     // free the pending message handle
     dbus_pending_call_unref(pending);
+    dbus_message_unref(reply);
 
     return reply;
 }
@@ -367,7 +375,7 @@ char* get_player_name(char* full_namespace)
 
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
 {
-    mpris_properties properties = {};
+    mpris_properties properties;
     mpris_properties_init(&properties);
     properties.player_name = get_player_name(destination);
 
@@ -399,6 +407,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     if (NULL == pending) {
         //fprintf(stderr, "Pending Call Null\n");
     }
+    dbus_connection_flush(conn);
 
     // free message
     dbus_message_unref(msg);
@@ -419,6 +428,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter) && DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
         DBusMessageIter arrayElementIter;
+        dbus_message_unref(reply);
 
         dbus_message_iter_recurse(&rootIter, &arrayElementIter);
         while (true) {

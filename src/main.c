@@ -234,7 +234,7 @@ int main(int argc, char** argv)
     dbus_error_init(&err);
 
     // connect to the system bus and check for errors
-    conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
+    conn = dbus_bus_get_private(DBUS_BUS_SESSION, &err);
     if (dbus_error_is_set(&err)) {
         //fprintf(stderr, "Connection error(%s)\n", err.message);
         dbus_error_free(&err);
@@ -252,12 +252,12 @@ int main(int argc, char** argv)
         dbus_error_free(&err);
     }
     if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) {
-        goto _error;
+        goto _dbus_error;
     }
 
     char* destination = get_player_namespace(conn);
-    if (NULL == destination ) { goto _error; }
-    if (strlen(destination) == 0) { goto _error; }
+    if (NULL == destination ) { goto _dbus_error; }
+    if (strlen(destination) == 0) { goto _dbus_error; }
 
     if (NULL == dbus_property) {
         call_dbus_method(conn, destination,
@@ -269,11 +269,17 @@ int main(int argc, char** argv)
         print_mpris_info(&properties, info_format);
     }
 
-    dbus_connection_flush(conn);
-
+    dbus_connection_close(conn);
+    dbus_connection_unref(conn);
     _success:
     {
         return EXIT_SUCCESS;
+    }
+    _dbus_error: {
+        dbus_connection_close(conn);
+        dbus_connection_unref(conn);
+
+        goto _error;
     }
     _error:
     {
