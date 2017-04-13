@@ -3,7 +3,7 @@ language: c
 dist: trusty
 
 compiler:
-  - clang
+  - clang-3.8
 
 script:
     - make check_leak
