@@ -31,6 +31,7 @@
 
 #define MPRIS_PROP_PLAYBACK_STATUS "PlaybackStatus"
 #define MPRIS_PROP_METADATA        "Metadata"
+#define MPRIS_ARG_PLAYER_IDENTITY  "Identity"
 
 #define DBUS_DESTINATION           "org.freedesktop.DBus"
 #define DBUS_PATH                  "/"
@@ -38,6 +39,7 @@
 #define DBUS_PROPERTIES_INTERFACE  "org.freedesktop.DBus.Properties"
 #define DBUS_METHOD_LIST_NAMES     "ListNames"
 #define DBUS_METHOD_GET_ALL        "GetAll"
+#define DBUS_METHOD_GET            "Get"
 
 #define MPRIS_METADATA_BITRATE      "bitrate"
 #define MPRIS_METADATA_ART_URL      "mpris:artUrl"
@@ -365,19 +367,79 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
     return track;
 }
 
-char* get_player_name(char* full_namespace)
+char* get_player_identity(DBusConnection *conn, char* destination)
 {
-    // finds the 2 in MediaPlayer2 and moves forward 2 addresses in the string
-    char* name = strstr(full_namespace, "2");
-    name += 2;
-    return name;
+    if (NULL == conn) { return NULL; }
+    char* player_identity = NULL;
+
+    DBusMessage* msg;
+    DBusError err;
+    DBusPendingCall* pending;
+    DBusMessageIter params;
+
+    char* interface = DBUS_PROPERTIES_INTERFACE;
+    char* method = DBUS_METHOD_GET;
+    char* path = MPRIS_PLAYER_PATH;
+    char* arg_interface = MPRIS_PLAYER_NAMESPACE;
+    char* arg_identity = MPRIS_ARG_PLAYER_IDENTITY;
+
+    dbus_error_init(&err);
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(destination, path, interface, method);
+    if (NULL == msg) { return NULL; }
+
+    // append interface we want to get the property from
+    dbus_message_iter_init_append(msg, &params);
+    if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_interface)) {
+        //fprintf(stderr, "Out Of Memory!\n");
+    }
+
+    dbus_message_iter_init_append(msg, &params);
+    if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_identity)) {
+        //fprintf(stderr, "Out Of Memory!\n");
+    }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
+        //fprintf(stderr, "Out Of Memory!\n");
+    }
+    if (NULL == pending) {
+        //fprintf(stderr, "Pending Call Null\n");
+    }
+    dbus_connection_flush(conn);
+
+    // free message
+    dbus_message_unref(msg);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) {
+        //fprintf(stderr, "Reply Null\n");
+    }
+
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+
+    DBusMessageIter rootIter;
+    if (dbus_message_iter_init(reply, &rootIter)) {
+        dbus_message_unref(reply);
+        player_identity = extract_string_var(&rootIter, &err);
+    }
+    if (dbus_error_is_set(&err)) {
+        dbus_error_free(&err);
+    }
+
+    return player_identity;
 }
 
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
 {
     mpris_properties properties;
     mpris_properties_init(&properties);
-    properties.player_name = get_player_name(destination);
 
     if (NULL == conn) { return properties; }
 
@@ -494,23 +556,9 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
             dbus_message_iter_next(&arrayElementIter);
         }
     }
+    properties.player_name = get_player_identity(conn, destination);
 
     return properties;
-}
-
-char* get_dbus_string_scalar(DBusMessage* message)
-{
-    if (NULL == message) { return NULL; }
-    char* status = NULL;
-
-    DBusMessageIter rootIter;
-    if (dbus_message_iter_init(message, &rootIter) &&
-        DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&rootIter)) {
-
-        dbus_message_iter_get_basic(&rootIter, &status);
-    }
-
-    return status;
 }
 
 char* get_player_namespace(DBusConnection* conn)
