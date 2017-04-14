@@ -28,7 +28,7 @@ endif
 all: release
 
 #.PHONY: check
-#check: check_leak check_thread
+#check: check_leak check_memory
 
 .PHONY: check_leak
 check_leak: export CC := clang
@@ -37,16 +37,7 @@ check_leak: DLINK_FLAGS += -pie
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 check_leak: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 check_leak: BIN_NAME := $(BIN_NAME)-test
-check_leak: clean $(BIN_NAME) run
-
-.PHONY: check_thread
-check_thread: export CC := clang
-check_thread: DCOMPILE_FLAGS += -fsanitize=thread -lpthread -fPIE
-check_thread: DLINK_FLAGS += -pie
-check_thread: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
-check_thread: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
-check_thread: BIN_NAME := $(BIN_NAME)-test
-check_thread: clean $(BIN_NAME) run
+check_leak: clean executable run
 
 .PHONY: check_memory
 check_memory: export CC := clang
@@ -55,7 +46,7 @@ check_memory: DLINK_FLAGS += -pie
 check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 check_memory: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 check_memory: BIN_NAME := $(BIN_NAME)-test
-check_memory: clean $(BIN_NAME) run
+check_memory: clean executable run
 
 .PHONY: check_undefined
 check_undefined: export CC := clang
@@ -64,7 +55,7 @@ check_undefined: DLINK_FLAGS += -pie
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 check_undefined: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 check_undefined: BIN_NAME := $(BIN_NAME)-test
-check_undefined: clean $(BIN_NAME) run
+check_undefined: clean executable run
 
 .PHONY: run
 run: $(BIN_NAME)
@@ -76,10 +67,10 @@ debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 
 .PHONY: release
-release: $(BIN_NAME)
+release: executable
 
 .PHONY: debug
-debug: $(BIN_NAME)
+debug: executable
 
 .PHONY: clean
 clean:
@@ -93,5 +84,6 @@ install: $(BIN_NAME)
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
 
-$(BIN_NAME):
+.PHONY: executable
+executable:
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
