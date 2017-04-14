@@ -64,6 +64,7 @@
 "Usage:\n  %s COMMAND - Control running MPRIS player\n" \
 "Commands:\n"\
 "\t" ARG_HELP "\t\tThis help message\n" \
+"\t" ARG_PLAY "\t\tBegin playing\n" \
 "\t" ARG_PLAY_PAUSE "\t\tToggle play or pause\n" \
 "\t" ARG_PAUSE "\t\tPause the player\n" \
 "\t" ARG_STOP "\t\tStop the player\n" \
