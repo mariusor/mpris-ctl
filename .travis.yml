@@ -33,5 +33,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: marius@habarnam.ro
     build_command_prepend: "make clean"
-    build_command: "CC=gcc make -j 4"
+    build_command: "CC=gcc make -j4 debug"
     branch_pattern: master
