@@ -56,7 +56,7 @@ check_undefined: clean run
 
 .PHONY: run
 run: executable
-	./$(BIN_NAME) info
+	./$(BIN_NAME) info || test $$? -eq 1
 
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
 release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
