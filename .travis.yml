@@ -1,22 +1,23 @@
 language: c
 
 dist: trusty
+sudo: false
 
 compiler:
   - clang-3.8
 
 script:
     - make check_leak
-    - make check_memory
-    - make check_thread
-    - make check_undefined
+#    - make check_memory
+#    - make check_thread
+#    - make check_undefined
 
 env:
   global:
    - secure: "56PTl/WyduIZ0khwtLuPgS/0+MHBprftcuFcwdMSI4NVxXjbUgpArRn4fWSlfzVtss45rBUtZzJw8f508dWh5HJSnbQGrgFNlOxxdof/5O972wiOIohTMuhs3kdI4H0qLj9OBgZAWNGKUyHI2haBafOuOH/xAoNA7gY+sE4slbXEgCDQbqRzvLPizQmQYkNNKmZezIMHaJTpETnUysopNEqZKmEfV61QPLHOM+SGbN0oOd0x1MYwKSC0AX4H6maRv3DNWOn09/6CQSiHuCDKkdQRTLfQ10IZw7kInjFEzeCigEfybDCb2Ceb5rfrQWwSZsqbWe1TMzwXp8beGpYT5zaY2FDKYhxUbrMq4rqKtR+6vUVmDokz7mmFLEnDC8YohUi+lK/CHX3zKOrYdHaxsrXkzP5FeLHXlTjnRVwRRFenpFH7T/wsBngMVDDwMbpO87SRcM7X6f4M8SqxKbaTvRJh57nWd4KjhA3ohXLIJMH+Cy8rCm3PIov1IxIB0y0Y1Xyckfxt+RXsjCo/TlEhURNud8E6Yky2H0ERihBttinuiCiPa5Wa6EhE9XXe7iQx1kZ/hp9w4KmTRzGlAYIBBP644QuzaJAKHRqGH19ULhU1SkMx+yne480Yet/uJKQH+WgklV/df4xUruG2YRjg59UHbPHzamjGtZacQwWO5CE="
 
 before_install:
-      - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+#      - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
   apt:
