@@ -370,7 +370,6 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
 char* get_player_identity(DBusConnection *conn, char* destination)
 {
     if (NULL == conn) { return NULL; }
-    char* player_identity = NULL;
 
     DBusMessage* msg;
     DBusError err;
@@ -427,13 +426,13 @@ char* get_player_identity(DBusConnection *conn, char* destination)
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter)) {
         dbus_message_unref(reply);
-        player_identity = extract_string_var(&rootIter, &err);
+        return extract_string_var(&rootIter, &err);
     }
     if (dbus_error_is_set(&err)) {
         dbus_error_free(&err);
     }
 
-    return player_identity;
+    return NULL;
 }
 
 mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
