@@ -9,8 +9,7 @@ compiler:
 script:
     - make check_leak
 #    - make check_memory
-#    - make check_thread
-#    - make check_undefined
+    - make check_undefined
 
 env:
   global:
