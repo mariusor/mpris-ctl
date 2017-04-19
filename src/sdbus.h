@@ -378,7 +378,7 @@ char* get_player_identity(DBusConnection *conn, const char* destination)
     DBusError err;
     DBusPendingCall* pending;
     DBusMessageIter params;
-    char* result;
+    char* result = NULL;
 
     char* interface = DBUS_PROPERTIES_INTERFACE;
     char* method = DBUS_METHOD_GET;
