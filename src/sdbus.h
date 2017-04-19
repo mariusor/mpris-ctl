@@ -138,6 +138,7 @@ void mpris_properties_unref(mpris_properties *properties)
 DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
 {
     if (NULL == conn) { return NULL; }
+    if (NULL == destination) { return NULL; }
 
     DBusMessage* msg;
     DBusPendingCall* pending;
@@ -148,14 +149,10 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
-        //fprintf(stderr, "Out Of Memory!\n");
-        dbus_message_unref(msg);
-        return NULL;
+        goto _unref_message_err;
     }
     if (NULL == pending) {
-        //fprintf(stderr, "Pending Call Null\n");
-        dbus_message_unref(msg);
-        return NULL;
+        goto _unref_message_err;
     }
     dbus_connection_flush(conn);
 
@@ -168,15 +165,19 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
     DBusMessage* reply;
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
-    if (NULL == reply) {
-        //fprintf(stderr, "Reply Null\n");
-    }
 
     // free the pending message handle
     dbus_pending_call_unref(pending);
-    dbus_message_unref(reply);
+    // free message
+    dbus_message_unref(msg);
 
     return reply;
+
+_unref_message_err:
+    {
+        dbus_message_unref(msg);
+    }
+    return NULL;
 }
 
 double extract_double_var(DBusMessageIter *iter, DBusError *error)
@@ -367,14 +368,17 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
     return track;
 }
 
-char* get_player_identity(DBusConnection *conn, char* destination)
+char* get_player_identity(DBusConnection *conn, const char* destination)
 {
     if (NULL == conn) { return NULL; }
+    if (NULL == destination) { return NULL; }
+    //if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return NULL; }
 
     DBusMessage* msg;
     DBusError err;
     DBusPendingCall* pending;
     DBusMessageIter params;
+    char* result;
 
     char* interface = DBUS_PROPERTIES_INTERFACE;
     char* method = DBUS_METHOD_GET;
@@ -390,25 +394,22 @@ char* get_player_identity(DBusConnection *conn, char* destination)
     // append interface we want to get the property from
     dbus_message_iter_init_append(msg, &params);
     if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_interface)) {
-        //fprintf(stderr, "Out Of Memory!\n");
+        goto _unref_message_err;
     }
 
     dbus_message_iter_init_append(msg, &params);
     if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_identity)) {
-        //fprintf(stderr, "Out Of Memory!\n");
+        goto _unref_message_err;
     }
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
-        //fprintf(stderr, "Out Of Memory!\n");
+        goto _unref_message_err;
     }
     if (NULL == pending) {
-        //fprintf(stderr, "Pending Call Null\n");
+        goto _unref_message_err;
     }
     dbus_connection_flush(conn);
-
-    // free message
-    dbus_message_unref(msg);
 
     // block until we receive a reply
     dbus_pending_call_block(pending);
@@ -416,31 +417,43 @@ char* get_player_identity(DBusConnection *conn, char* destination)
     DBusMessage* reply;
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
-    if (NULL == reply) {
-        //fprintf(stderr, "Reply Null\n");
-    }
-
-    // free the pending message handle
-    dbus_pending_call_unref(pending);
+    if (NULL == reply) { goto _unref_pending_err; }
 
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter)) {
-        dbus_message_unref(reply);
-        return extract_string_var(&rootIter, &err);
+        result = extract_string_var(&rootIter, &err);
     }
     if (dbus_error_is_set(&err)) {
         dbus_error_free(&err);
     }
 
+    dbus_message_unref(reply);
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+    // free message
+    dbus_message_unref(msg);
+
+    return result;
+
+_unref_pending_err:
+    {
+        dbus_pending_call_unref(pending);
+        goto _unref_message_err;
+    }
+_unref_message_err:
+    {
+        dbus_message_unref(msg);
+    }
     return NULL;
 }
 
-mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
+mpris_properties get_mpris_properties(DBusConnection* conn, const char* destination)
 {
     mpris_properties properties;
     mpris_properties_init(&properties);
 
     if (NULL == conn) { return properties; }
+    if (NULL == destination) { return properties; }
 
     DBusMessage* msg;
     DBusPendingCall* pending;
@@ -458,21 +471,17 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     // append interface we want to get the property from
     dbus_message_iter_init_append(msg, &params);
     if (!dbus_message_iter_append_basic(&params, DBUS_TYPE_STRING, &arg_interface)) {
-        //fprintf(stderr, "Out Of Memory!\n");
+        goto _unref_message_err;
     }
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
-        //fprintf(stderr, "Out Of Memory!\n");
+        goto _unref_message_err;
     }
     if (NULL == pending) {
-        //fprintf(stderr, "Pending Call Null\n");
+        goto _unref_message_err;
     }
     dbus_connection_flush(conn);
-
-    // free message
-    dbus_message_unref(msg);
-
     // block until we receive a reply
     dbus_pending_call_block(pending);
 
@@ -480,16 +489,11 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
     if (NULL == reply) {
-        //fprintf(stderr, "Reply Null\n");
+        goto _unref_pending_err;
     }
-
-    // free the pending message handle
-    dbus_pending_call_unref(pending);
-
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter) && DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
         DBusMessageIter arrayElementIter;
-        dbus_message_unref(reply);
 
         dbus_message_iter_recurse(&rootIter, &arrayElementIter);
         while (true) {
@@ -555,8 +559,24 @@ mpris_properties get_mpris_properties(DBusConnection* conn, char* destination)
             dbus_message_iter_next(&arrayElementIter);
         }
     }
-    properties.player_name = get_player_identity(conn, destination);
+    dbus_message_unref(reply);
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+    // free message
+    dbus_message_unref(msg);
 
+    properties.player_name = get_player_identity(conn, destination);
+    return properties;
+
+_unref_pending_err:
+    {
+        dbus_pending_call_unref(pending);
+        goto _unref_message_err;
+    }
+_unref_message_err:
+    {
+        dbus_message_unref(msg);
+    }
     return properties;
 }
 
@@ -565,14 +585,35 @@ char* get_player_namespace(DBusConnection* conn)
     if (NULL == conn) { return NULL; }
 
     char* player_namespace = NULL;
-
     char* method = DBUS_METHOD_LIST_NAMES;
     char* destination = DBUS_DESTINATION;
     char* path = DBUS_PATH;
     char* interface = DBUS_INTERFACE;
     const char* mpris_namespace = MPRIS_PLAYER_NAMESPACE;
-    DBusMessage* reply = call_dbus_method(conn, destination, path, interface, method);
-    if (NULL == reply) { return NULL; }
+
+    DBusMessage* msg;
+    DBusPendingCall* pending;
+
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(destination, path, interface, method);
+    if (NULL == msg) { return NULL; }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
+        goto _unref_message_err;
+    }
+    if (NULL == pending) {
+        goto _unref_message_err;
+    }
+    dbus_connection_flush(conn);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) { goto _unref_pending_err; }
 
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter) &&
@@ -595,6 +636,22 @@ char* get_player_namespace(DBusConnection* conn)
             dbus_message_iter_next(&arrayElementIter);
         }
     }
+    dbus_message_unref(reply);
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+    // free message
+    dbus_message_unref(msg);
 
     return player_namespace;
+
+_unref_pending_err:
+    {
+        dbus_pending_call_unref(pending);
+        goto _unref_message_err;
+    }
+_unref_message_err:
+    {
+        dbus_message_unref(msg);
+    }
+    return NULL;
 }
