@@ -372,13 +372,13 @@ char* get_player_identity(DBusConnection *conn, const char* destination)
 {
     if (NULL == conn) { return NULL; }
     if (NULL == destination) { return NULL; }
-    //if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return NULL; }
+    if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return NULL; }
 
     DBusMessage* msg;
     DBusError err;
     DBusPendingCall* pending;
     DBusMessageIter params;
-    char* result = NULL;
+    char* result = "unknown";
 
     char* interface = DBUS_PROPERTIES_INTERFACE;
     char* method = DBUS_METHOD_GET;
