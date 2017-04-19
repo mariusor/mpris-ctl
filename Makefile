@@ -44,7 +44,7 @@ check_memory: DCOMPILE_FLAGS += -fsanitize=memory #-fPIE
 check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 #check_memory: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 check_memory: BIN_NAME := $(BIN_NAME)-test
-check_memory: clean debug run
+check_memory: clean run
 
 .PHONY: check_undefined
 check_undefined: DCOMPILE_FLAGS += -fsanitize=undefined #-fPIE
@@ -52,7 +52,7 @@ check_undefined: DCOMPILE_FLAGS += -fsanitize=undefined #-fPIE
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 #check_undefined: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 check_undefined: BIN_NAME := $(BIN_NAME)-test
-check_undefined: clean debug run
+check_undefined: clean run
 
 .PHONY: run
 run: executable
