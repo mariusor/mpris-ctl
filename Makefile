@@ -31,7 +31,7 @@ all: release
 #check: check_leak check_memory
 
 .PHONY: check_leak
-#check_leak: DCOMPILE_FLAGS += -fsanitize=address -fPIE
+check_leak: DCOMPILE_FLAGS += -fsanitize=address #-fPIE
 #check_leak: DLINK_FLAGS += -pie
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 check_leak: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
@@ -39,7 +39,7 @@ check_leak: BIN_NAME := $(BIN_NAME)-test
 check_leak: clean run
 
 .PHONY: check_memory
-#check_memory: DCOMPILE_FLAGS += -fsanitize=memory -fPIE
+check_memory: DCOMPILE_FLAGS += -fsanitize=memory #-fPIE
 #check_memory: DLINK_FLAGS += -pie
 #check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 #check_memory: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
@@ -47,7 +47,7 @@ check_memory: BIN_NAME := $(BIN_NAME)-test
 check_memory: clean debug run
 
 .PHONY: check_undefined
-#check_undefined: DCOMPILE_FLAGS += -fsanitize=undefined -fPIE
+check_undefined: DCOMPILE_FLAGS += -fsanitize=undefined #-fPIE
 #check_undefined: DLINK_FLAGS += -pie
 #check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 #check_undefined: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
