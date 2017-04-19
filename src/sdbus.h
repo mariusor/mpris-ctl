@@ -59,10 +59,6 @@
 #define DBUS_CONNECTION_TIMEOUT    100 //ms
 
 typedef struct mpris_metadata {
-    int track_number;
-    int bitrate;
-    int disc_number;
-    int length; // mpris specific
     char* album_artist;
     char* composer;
     char* genre;
@@ -74,6 +70,10 @@ typedef struct mpris_metadata {
     char* title;
     char* url;
     char* art_url; //mpris specific
+    int length; // mpris specific
+    unsigned short track_number;
+    unsigned short bitrate;
+    unsigned short disc_number;
 
 } mpris_metadata;
 
