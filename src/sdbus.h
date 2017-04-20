@@ -292,7 +292,7 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
 
 mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
 {
-    mpris_metadata track = {};
+    mpris_metadata track;
     mpris_metadata_init(&track);
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
@@ -499,7 +499,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
         while (true) {
             char* key;
             if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&arrayElementIter)) {
-                DBusError err = {};
+                DBusError err;
                 DBusMessageIter dictIter;
                 dbus_message_iter_recurse(&arrayElementIter, &dictIter);
                 if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dictIter)) {

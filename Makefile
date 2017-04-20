@@ -1,7 +1,7 @@
 BIN_NAME := mpris-ctl
 CC ?= clang
 LIBS = dbus-1
-COMPILE_FLAGS = -std=c99 -Wall -Wextra
+COMPILE_FLAGS = -std=c99 -Wpedantic -Wall -Wextra
 LINK_FLAGS =
 RCOMPILE_FLAGS = -D NDEBUG
 DCOMPILE_FLAGS = -g #-D DEBUG -O1
