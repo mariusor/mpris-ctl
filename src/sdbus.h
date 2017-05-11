@@ -290,20 +290,23 @@ bool extract_boolean_var(DBusMessageIter *iter,  DBusError *error)
     return false;
 }
 
-mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
+mpris_metadata load_metadata(DBusMessageIter *iter)
 {
     mpris_metadata track;
     mpris_metadata_init(&track);
 
+    DBusError err;
+    dbus_error_init(&err);
+
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
+        dbus_set_error_const(&err, "iter_should_be_variant", "This message iterator must be have variant type");
         return track;
     }
 
     DBusMessageIter variantIter;
     dbus_message_iter_recurse(iter, &variantIter);
     if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&variantIter)) {
-        dbus_set_error_const(error, "variant_should_be_array", "This variant reply message must have array content");
+        dbus_set_error_const(&err, "variant_should_be_array", "This variant reply message must have array content");
         return track;
     }
     DBusMessageIter arrayIter;
@@ -314,7 +317,7 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
             DBusMessageIter dictIter;
             dbus_message_iter_recurse(&arrayIter, &dictIter);
             if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dictIter)) {
-                dbus_set_error_const(error, "missing_key", "This message iterator doesn't have key");
+                dbus_set_error_const(&err, "missing_key", "This message iterator doesn't have key");
             }
             dbus_message_iter_get_basic(&dictIter, &key);
 
@@ -324,40 +327,40 @@ mpris_metadata load_metadata(DBusMessageIter *iter,  DBusError *error)
             dbus_message_iter_next(&dictIter);
 
             if (!strncmp(key, MPRIS_METADATA_BITRATE, strlen(MPRIS_METADATA_BITRATE))) {
-                track.bitrate = extract_int32_var(&dictIter, error);
+                track.bitrate = extract_int32_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_ART_URL, strlen(MPRIS_METADATA_ART_URL))) {
-                track.art_url = extract_string_var(&dictIter, error);
+                track.art_url = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_LENGTH, strlen(MPRIS_METADATA_LENGTH))) {
-                track.length = extract_int64_var(&dictIter, error);
+                track.length = extract_int64_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_TRACKID, strlen(MPRIS_METADATA_TRACKID))) {
-                track.track_id = extract_string_var(&dictIter, error);
+                track.track_id = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_ALBUM_ARTIST, strlen(MPRIS_METADATA_ALBUM_ARTIST))) {
-                track.album_artist = extract_string_var(&dictIter, error);
+                track.album_artist = extract_string_var(&dictIter, &err);
             } else if (!strncmp(key, MPRIS_METADATA_ALBUM, strlen(MPRIS_METADATA_ALBUM))) {
-                track.album = extract_string_var(&dictIter, error);
+                track.album = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_ARTIST, strlen(MPRIS_METADATA_ARTIST))) {
-                track.artist = extract_string_var(&dictIter, error);
+                track.artist = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_COMMENT, strlen(MPRIS_METADATA_COMMENT))) {
-                track.comment = extract_string_var(&dictIter, error);
+                track.comment = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_TITLE, strlen(MPRIS_METADATA_TITLE))) {
-                track.title = extract_string_var(&dictIter, error);
+                track.title = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_TRACK_NUMBER, strlen(MPRIS_METADATA_TRACK_NUMBER))) {
-                track.track_number = extract_int32_var(&dictIter, error);
+                track.track_number = extract_int32_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_URL, strlen(MPRIS_METADATA_URL))) {
-                track.url = extract_string_var(&dictIter, error);
+                track.url = extract_string_var(&dictIter, &err);
             }
-            if (dbus_error_is_set(error)) {
-                //fprintf(stderr, "error: %s, %s\n", key, error->message);
-                dbus_error_free(error);
+            if (dbus_error_is_set(&err)) {
+                //fprintf(stderr, "err: %s, %s\n", key, err->message);
+                dbus_error_free(&err);
             }
         }
         if (!dbus_message_iter_has_next(&arrayIter)) {
@@ -458,6 +461,9 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
     DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter params;
+    DBusError err;
+
+    dbus_error_init(&err);
 
     char* interface = DBUS_PROPERTIES_INTERFACE;
     char* method = DBUS_METHOD_GET_ALL;
@@ -499,7 +505,6 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
         while (true) {
             char* key;
             if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(&arrayElementIter)) {
-                DBusError err;
                 DBusMessageIter dictIter;
                 dbus_message_iter_recurse(&arrayElementIter, &dictIter);
                 if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dictIter)) {
@@ -534,7 +539,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
                     properties.loop_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_METADATA, strlen(MPRIS_PNAME_METADATA))) {
-                    properties.metadata = load_metadata(&dictIter, &err);
+                    properties.metadata = load_metadata(&dictIter);
                 }
                 if (!strncmp(key, MPRIS_PNAME_PLAYBACKSTATUS, strlen(MPRIS_PNAME_PLAYBACKSTATUS))) {
                      properties.playback_status = extract_string_var(&dictIter, &err);
