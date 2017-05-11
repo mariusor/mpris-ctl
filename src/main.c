@@ -159,17 +159,23 @@ void print_mpris_info(mpris_properties *props, char* format)
     const char* info_full = ARG_INFO_FULL_STATUS;
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
     char* volume_label = get_zero_string(4);
+    if (NULL == volume_label) { return; }
     snprintf(volume_label, 20, "%.2f", props->volume);
     char* pos_label = get_zero_string(10);
+    if (NULL == pos_label) { goto error_pos_label; }
     snprintf(pos_label, 20, "%" PRId64, props->position);
     char* track_number_label = get_zero_string(3);
+    if (NULL == track_number_label) { goto error_track_number_label; }
     snprintf(track_number_label, 3, "%d", props->metadata.track_number);
     char* bitrate_label = get_zero_string(5);
+    if (NULL == bitrate_label) { goto error_bitrate_label; }
     snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
     char* length_label = get_zero_string(10);
+    if (NULL == length_label) { goto error_length_label; }
     snprintf(length_label, 20, "%d", props->metadata.length);
 
     char* output = get_zero_string(MAX_OUTPUT_LENGTH);
+    if (NULL == output) { goto error_output; }
     strncpy(output, format, MAX_OUTPUT_LENGTH);
 
     output = str_replace(output, "\\n", "\n");
@@ -194,10 +200,15 @@ void print_mpris_info(mpris_properties *props, char* format)
 
     fprintf(stdout, "%s\n", output);
     free(output);
+error_output:
     free(length_label);
+error_length_label:
     free(bitrate_label);
+error_bitrate_label:
     free(track_number_label);
+error_track_number_label:
     free(pos_label);
+error_pos_label:
     free(volume_label);
 }
 
