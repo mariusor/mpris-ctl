@@ -163,16 +163,16 @@ void print_mpris_info(mpris_properties *props, char* format)
     snprintf(volume_label, 20, "%.2f", props->volume);
     char* pos_label = get_zero_string(10);
     if (NULL == pos_label) { goto error_pos_label; }
-    snprintf(pos_label, 20, "%" PRId64, props->position);
+    snprintf(pos_label, 20, "%.2lfs", (props->position / 1000000.0));
     char* track_number_label = get_zero_string(3);
     if (NULL == track_number_label) { goto error_track_number_label; }
     snprintf(track_number_label, 3, "%d", props->metadata.track_number);
     char* bitrate_label = get_zero_string(5);
     if (NULL == bitrate_label) { goto error_bitrate_label; }
     snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
-    char* length_label = get_zero_string(10);
+    char* length_label = get_zero_string(15);
+    snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
     if (NULL == length_label) { goto error_length_label; }
-    snprintf(length_label, 20, "%d", props->metadata.length);
 
     char* output = get_zero_string(MAX_OUTPUT_LENGTH);
     if (NULL == output) { goto error_output; }
