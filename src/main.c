@@ -9,8 +9,8 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "sdbus.h"
 #include "sstring.h"
+#include "sdbus.h"
 
 #define ARG_HELP        "help"
 #define ARG_PLAY        "play"

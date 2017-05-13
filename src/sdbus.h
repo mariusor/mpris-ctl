@@ -80,7 +80,7 @@ typedef struct mpris_metadata {
 typedef struct mpris_properties {
     mpris_metadata metadata;
     double volume;
-    int64_t position;
+    uint64_t position;
     char* player_name;
     char* loop_status;
     char* playback_status;
@@ -253,24 +253,6 @@ int32_t extract_int32_var(DBusMessageIter *iter, DBusError *error)
     return 0;
 }
 
-uint64_t extract_uint64_var(DBusMessageIter *iter, DBusError *error)
-{
-    uint64_t result = 0;
-    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
-        dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
-        return 0;
-    }
-
-    DBusMessageIter variantIter;
-    dbus_message_iter_recurse(iter, &variantIter);
-
-    if (DBUS_TYPE_UINT64 == dbus_message_iter_get_arg_type(&variantIter)) {
-        dbus_message_iter_get_basic(&variantIter, &result);
-        return result;
-    }
-    return 0;
-}
-
 int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
 {
     int64_t result = 0;
@@ -284,6 +266,12 @@ int64_t extract_int64_var(DBusMessageIter *iter, DBusError *error)
 
     if (DBUS_TYPE_INT64 == dbus_message_iter_get_arg_type(&variantIter)) {
         dbus_message_iter_get_basic(&variantIter, &result);
+        return result;
+    }
+    if (DBUS_TYPE_UINT64 == dbus_message_iter_get_arg_type(&variantIter)) {
+        uint64_t temp;
+        dbus_message_iter_get_basic(&variantIter, &temp);
+        result = (int64_t)temp;
         return result;
     }
     return 0;
@@ -351,7 +339,7 @@ mpris_metadata load_metadata(DBusMessageIter *iter)
                 track.art_url = extract_string_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_LENGTH, strlen(MPRIS_METADATA_LENGTH))) {
-                track.length = extract_uint64_var(&dictIter, &err);
+                track.length = extract_int64_var(&dictIter, &err);
             }
             if (!strncmp(key, MPRIS_METADATA_TRACKID, strlen(MPRIS_METADATA_TRACKID))) {
                 track.track_id = extract_string_var(&dictIter, &err);
@@ -649,7 +637,9 @@ char* get_player_namespace(DBusConnection* conn)
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
-                    player_namespace = str;
+                    size_t len = strlen(str);
+                    player_namespace = get_zero_string(len);
+                    strncpy(player_namespace, str, len);
                     break;
                 }
             }
