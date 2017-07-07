@@ -32,17 +32,14 @@ all: release
 
 .PHONY: check_leak
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
-check_leak: BIN_NAME := $(BIN_NAME)-test
 check_leak: clean run
 
 .PHONY: check_memory
 check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
-check_memory: BIN_NAME := $(BIN_NAME)-test
 check_memory: clean run
 
 .PHONY: check_undefined
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
-check_undefined: BIN_NAME := $(BIN_NAME)-test
 check_undefined: clean run
 
 .PHONY: run
