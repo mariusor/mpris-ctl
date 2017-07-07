@@ -3,8 +3,8 @@ CC ?= clang
 LIBS = dbus-1
 COMPILE_FLAGS = -std=c99 -Wpedantic -Wall -Wextra
 LINK_FLAGS =
-RCOMPILE_FLAGS = -D NDEBUG
-DCOMPILE_FLAGS = -g #-D DEBUG -O1
+RCOMPILE_FLAGS = -DNDEBUG
+DCOMPILE_FLAGS = -g -DDEBUG -O1
 RLINK_FLAGS =
 DLINK_FLAGS =
 
@@ -21,7 +21,7 @@ ifeq ($(shell git describe > /dev/null 2>&1 ; echo $$?), 0)
 	VERSION := $(shell git describe --tags --long --dirty=-git --always )
 endif
 ifneq ($(VERSION), )
-	override CFLAGS := $(CFLAGS) -D VERSION_HASH=\"$(VERSION)\"
+	override CFLAGS := $(CFLAGS) -DVERSION_HASH=\"$(VERSION)\"
 endif
 
 .PHONY: all
@@ -44,10 +44,6 @@ check_memory: clean run
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
 check_undefined: BIN_NAME := $(BIN_NAME)-test
 check_undefined: clean run
-
-.PHONY: run
-run: executable
-	./$(BIN_NAME) info || test $$? -eq 1
 
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
 release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)

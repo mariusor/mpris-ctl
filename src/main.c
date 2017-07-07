@@ -160,16 +160,16 @@ void print_mpris_info(mpris_properties *props, char* format)
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
     char* volume_label = get_zero_string(4);
     if (NULL == volume_label) { return; }
-    snprintf(volume_label, 20, "%.2f", props->volume);
+    snprintf(volume_label, 5, "%.2f", props->volume);
     char* pos_label = get_zero_string(10);
     if (NULL == pos_label) { goto error_pos_label; }
-    snprintf(pos_label, 20, "%.2lfs", (props->position / 1000000.0));
-    char* track_number_label = get_zero_string(3);
+    snprintf(pos_label, 11, "%.2lfs", (props->position / 1000000.0));
+    char* track_number_label = get_zero_string(6);
     if (NULL == track_number_label) { goto error_track_number_label; }
-    snprintf(track_number_label, 3, "%d", props->metadata.track_number);
-    char* bitrate_label = get_zero_string(5);
+    snprintf(track_number_label, 6, "%d", props->metadata.track_number);
+    char* bitrate_label = get_zero_string(6);
     if (NULL == bitrate_label) { goto error_bitrate_label; }
-    snprintf(bitrate_label, 5, "%d", props->metadata.bitrate);
+    snprintf(bitrate_label, 6, "%d", props->metadata.bitrate);
     char* length_label = get_zero_string(15);
     snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
     if (NULL == length_label) { goto error_length_label; }
@@ -280,6 +280,7 @@ int main(int argc, char** argv)
         mpris_properties properties = get_mpris_properties(conn, destination);
         print_mpris_info(&properties, info_format);
     }
+    if (NULL != destination) { free(destination); }
 
     dbus_connection_close(conn);
     dbus_connection_unref(conn);
