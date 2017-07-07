@@ -45,6 +45,10 @@ check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -
 check_undefined: BIN_NAME := $(BIN_NAME)-test
 check_undefined: clean run
 
+.PHONY: run
+run: executable
+	./$(BIN_NAME) info || test $$? -eq 1
+
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
 release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
 debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
