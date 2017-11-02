@@ -3,7 +3,7 @@ language: c
 dist: trusty
 
 compiler:
-  - clang-3.8
+  - clang-5.0
 
 script:
     - make check_leak
@@ -17,10 +17,10 @@ env:
 addons:
   apt:
     sources:
-    - sourceline: "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.8 main"
+    - sourceline: "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-5.0 main"
       key_url: http://llvm.org/apt/llvm-snapshot.gpg.key
     packages:
-    - clang-3.8
+    - clang-5.0
     - dbus
     - libdbus-1-dev
 
