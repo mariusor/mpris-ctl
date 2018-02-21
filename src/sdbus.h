@@ -168,8 +168,6 @@ DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* pat
 
     // free the pending message handle
     dbus_pending_call_unref(pending);
-    // free message
-    dbus_message_unref(msg);
 
     return reply;
 
