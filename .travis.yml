@@ -2,8 +2,11 @@ language: c
 
 dist: trusty
 
+group: edge
+
 compiler:
-  - clang-5.0
+- clang-5.0
+- gcc-7
 
 script:
     - make check_leak
@@ -17,10 +20,9 @@ env:
 addons:
   apt:
     sources:
-    - sourceline: "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-5.0 main"
-      key_url: http://llvm.org/apt/llvm-snapshot.gpg.key
+    - sourceline: "ppa:ubuntu-toolchain-r/test"
     packages:
-    - clang-5.0
+    - gcc-7
     - dbus
     - libdbus-1-dev
 
