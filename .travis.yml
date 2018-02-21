@@ -5,7 +5,7 @@ dist: trusty
 group: edge
 
 compiler:
-- clang-5.0
+- clang
 
 script:
     - make check_leak
