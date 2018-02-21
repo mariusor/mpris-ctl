@@ -28,19 +28,23 @@ endif
 all: release
 
 #.PHONY: check
-#check: check_leak check_memory
+check: check_leak check_memory
 
 .PHONY: check_leak
+check_leak: executable
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
-check_leak: clean run
+check_leak: export BIN_NAME := mpris-ctl-leak
+check_leak: run clean
 
 .PHONY: check_memory
 check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
-check_memory: clean run
+check_leak: export BIN_NAME := mpris-ctl-mem
+check_memory: run clean
 
 .PHONY: check_undefined
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
-check_undefined: clean run
+check_leak: export BIN_NAME := mpris-ctl-undef
+check_undefined: run clean
 
 .PHONY: run
 run: executable
