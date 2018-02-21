@@ -6,11 +6,11 @@ group: edge
 
 compiler:
 - clang-5.0
-- gcc-7
 
 script:
     - make check_leak
     - make check_undefined
+    - make check_memory
 
 env:
   global:
@@ -18,17 +18,14 @@ env:
 
 addons:
   apt:
-    sources:
-    - sourceline: "ppa:ubuntu-toolchain-r/test"
     packages:
-    - gcc-7
     - dbus
     - libdbus-1-dev
 
   coverity_scan:
     project:
       name: "mariusor/mpris-ctl"
-      version: 0.6.1
+      version: latest
       description: "Build submitted via Travis CI"
     notification_email: marius@habarnam.ro
     build_command_prepend: "make clean; export CC=gcc"
