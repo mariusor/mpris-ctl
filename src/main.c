@@ -200,7 +200,7 @@ void print_mpris_info(mpris_properties *props, char* format)
     output = str_replace(output, ARG_INFO_TRACK_NUMBER, track_number_label);
     output = str_replace(output, ARG_INFO_BITRATE, bitrate_label);
     output = str_replace(output, ARG_INFO_COMMENT, props->metadata.comment);
-    output = str_replace(output, ARG_INFO_ART_URL, props->metadata.url);
+    output = str_replace(output, ARG_INFO_ART_URL, props->metadata.art_url);
 
     fprintf(stdout, "%s\n", output);
     free(output);
