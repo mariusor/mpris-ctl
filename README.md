@@ -1,8 +1,8 @@
 # mpris-ctl 
 [![MIT Licensed](https://img.shields.io/github/license/mariusor/mpris-ctl.svg)](https://raw.githubusercontent.com/mariusor/mpris-ctl/master/LICENSE)
 [![Build status](https://img.shields.io/travis/mariusor/mpris-ctl.svg)](https://travis-ci.org/mariusor/mpris-ctl)
-[![Coverity Scan status](https://img.shields.io/coverity/scan/12309.svg)](https://scan.coverity.com/projects/12309)
-[![Latest build](https://img.shields.io/github/release/mariusor/mpris-ctl.svg)](https://github.com/mariusor/mpris-ctl/releases/latest)
+<!-- [![Coverity Scan status](https://img.shields.io/coverity/scan/12309.svg)](https://scan.coverity.com/projects/12309)
+[![Latest build](https://img.shields.io/github/release/mariusor/mpris-ctl.svg)](https://github.com/mariusor/mpris-ctl/releases/latest) -->
 [![AUR package](https://img.shields.io/aur/version/mpris-ctl.svg)](https://aur.archlinux.org/packages/mpris-ctl/)
 
 
