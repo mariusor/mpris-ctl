@@ -78,7 +78,7 @@ install: $(BIN_NAME) $(BIN_NAME).1
 .PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
-	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1.gz
+	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1
 
 $(BIN_NAME): $(SOURCES) src/*.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
