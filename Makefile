@@ -11,6 +11,7 @@ DLINK_FLAGS =
 SOURCES = src/main.c
 DESTDIR = /
 INSTALL_PREFIX = usr/local
+MAN_DIR = share/man
 
 ifneq ($(LIBS),)
 	CFLAGS += $(shell pkg-config --cflags $(LIBS))
@@ -55,6 +56,9 @@ release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
 debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 
+$(BIN_NAME).1: $(BIN_NAME).1.scd
+	scdoc < $< >$@
+
 .PHONY: release
 release: $(BIN_NAME)
 
@@ -64,14 +68,17 @@ debug: $(BIN_NAME)
 .PHONY: clean
 clean:
 	$(RM) $(BIN_NAME)
+	$(RM) $(BIN_NAME).1
 
 .PHONY: install
-install: $(BIN_NAME)
+install: $(BIN_NAME) $(BIN_NAME).1
 	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
+	install $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1
 
 .PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
+	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1
 
 $(BIN_NAME): $(SOURCES) src/*.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
