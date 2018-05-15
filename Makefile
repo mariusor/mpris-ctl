@@ -31,7 +31,7 @@ all: release
 check: check_leak check_memory
 
 .PHONY: check_leak
-check_leak: executable
+check_leak: $(BIN_NAME)
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
 check_leak: export BIN_NAME := mpris-ctl-leak
 check_leak: run clean
@@ -47,7 +47,7 @@ check_leak: export BIN_NAME := mpris-ctl-undef
 check_undefined: run clean
 
 .PHONY: run
-run: executable
+run: $(BIN_NAME)
 	./$(BIN_NAME) info || test $$? -eq 1
 
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
@@ -56,10 +56,10 @@ debug: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS)
 debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 
 .PHONY: release
-release: executable
+release: $(BIN_NAME)
 
 .PHONY: debug
-debug: executable
+debug: $(BIN_NAME)
 
 .PHONY: clean
 clean:
@@ -73,6 +73,5 @@ install: $(BIN_NAME)
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
 
-.PHONY: executable
-executable:
+$(BIN_NAME): $(SOURCES) src/*.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
