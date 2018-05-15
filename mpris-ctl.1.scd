@@ -2,7 +2,7 @@ MPRIS-CTL(1)
 
 # NAME
 
-*mpris-ctl* - The MPRIS control utility
+*mpris-ctl* - MPRIS media-player control utility
 
 # SYNOPSIS
 
@@ -10,7 +10,7 @@ mpris-ctl [COMMAND] [format string]
 
 # DESCRIPTION
 
-*mpris-ctl* is a control utility for any media-player that conform to the *MPRIS D-Bus Interface Specification*[1]
+*mpris-ctl* is a control utility for any media-player that conforms to the *MPRIS D-Bus Interface Specification*[1]
 
 # COMMANDS
 
@@ -44,7 +44,7 @@ mpris-ctl [COMMAND] [format string]
 # FORMAT SPECIFIERS
 
 *%player\_name*
-	prints the player name
+	prints the media-player's name
 
 *%track\_name*
 	prints the track name
@@ -53,7 +53,7 @@ mpris-ctl [COMMAND] [format string]
 	prints the track number
 
 *%track\_length*
-	prints the track length (seconds)
+	prints the track length in seconds
 
 *%artist\_name*
 	prints the artist name
@@ -80,10 +80,10 @@ mpris-ctl [COMMAND] [format string]
 	prints the loop status
 
 *%position*
-	prints the song position (seconds)
+	prints the song position in seconds
 
 *%bitrate*
-	prints the track's bitrate
+	prints the track's bit-rate
 
 *%comment*
 	prints the track's comment
