@@ -73,12 +73,12 @@ clean:
 .PHONY: install
 install: $(BIN_NAME) $(BIN_NAME).1
 	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
-	install $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1
+	install -m 644 $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1
 
 .PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
-	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1
+	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1.gz
 
 $(BIN_NAME): $(SOURCES) src/*.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) $(LDFLAGS) -o$(BIN_NAME)
