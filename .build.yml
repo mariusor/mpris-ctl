@@ -1,0 +1,16 @@
+image: archlinux
+packages:
+  - base-devel
+  - clang
+  - dbus
+  - tree
+environment:
+  CC: clang
+sources:
+  - https://git.sr.ht/~mariusor/mpris-ctl
+tasks:
+  - build: |
+      cd mpris-ctl
+      make check_leak
+      make check_undefined
+      make check_memory
