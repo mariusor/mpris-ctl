@@ -74,3 +74,8 @@ $ mpris-ctl info
 Song 42 - Bloor - The Best of Bloor
 
 ```
+
+## Resources
+
+For discussions related to the project without requiring a Github account please see our mailing list: [https://lists.sr.ht/~mariusor/mpris-tools](https://lists.sr.ht/~mariusor/mpris-tools).
+
