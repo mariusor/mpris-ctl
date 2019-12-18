@@ -65,15 +65,13 @@
 
 #define PLAYER_ACTIVE    "active"
 #define PLAYER_INACTIVE  "inactive"
-#define PLAYER_ALL       "all"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s [" ARG_PLAYER " NAME|" PLAYER_ACTIVE "|" PLAYER_INACTIVE "|" PLAYER_ALL "] COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " NAME|" PLAYER_ACTIVE "|" PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
 "Options:\n" \
 ARG_PLAYER " NAME\t\tExecute command for the NAME player\n" \
-"         "PLAYER_ACTIVE"\t\tExecute command for the active player\n" \
-"         "PLAYER_INACTIVE"\tExecute command for the active player\n" \
-"         "PLAYER_ALL"\t\tExecute command for all players\n" \
+"         "PLAYER_ACTIVE"\t\tExecute command for the active player(s)\n" \
+"         "PLAYER_INACTIVE"\tExecute command for the inactive player(s)\n" \
 "\n" \
 "Commands:\n"\
 "\t" CMD_HELP "\t\tThis help message\n" \
@@ -270,32 +268,23 @@ int main(int argc, char** argv)
         goto _error;
     }
 
-    // request a name on the bus
-    int ret = dbus_bus_request_name(conn, LOCAL_NAME,
-                               DBUS_NAME_FLAG_REPLACE_EXISTING,
-                               &err);
-    if (dbus_error_is_set(&err)) {
-        //fprintf(stderr, "Name error(%s)\n", err.message);
-        dbus_error_free(&err);
-    }
-    if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) {
-        goto _dbus_error;
-    }
+    mpris_player players[MAX_PLAYERS];
 
-    char* destination = get_player_namespace(conn);
-    if (NULL == destination ) { goto _dbus_error; }
-    if (strlen(destination) == 0) { goto _dbus_error; }
+    int found = load_players(conn, players);
+    if (found <= 0) { goto _dbus_error; }
 
-    if (NULL == dbus_property) {
-        call_dbus_method(conn, destination,
-                         MPRIS_PLAYER_PATH,
-                         MPRIS_PLAYER_INTERFACE,
-                         dbus_method);
-    } else {
-        mpris_properties properties = get_mpris_properties(conn, destination);
-        print_mpris_info(&properties, info_format);
+    for (int i = 0; i < found; i++) {
+        char *destination = players[i].namespace;
+        if (NULL == dbus_property) {
+            call_dbus_method(conn, destination,
+                             MPRIS_PLAYER_PATH,
+                             MPRIS_PLAYER_INTERFACE,
+                             dbus_method);
+        } else {
+            mpris_properties properties = get_mpris_properties(conn, destination);
+            print_mpris_info(&properties, info_format);
+        }
     }
-    if (NULL != destination) { free(destination); }
 
     dbus_connection_close(conn);
     dbus_connection_unref(conn);

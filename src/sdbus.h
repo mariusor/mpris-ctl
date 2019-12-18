@@ -58,6 +58,8 @@
 //   certain players which don't seem to reply to MPRIS methods
 #define DBUS_CONNECTION_TIMEOUT    100 //ms
 
+#define MAX_PLAYERS 20
+
 typedef struct mpris_metadata {
     char* album_artist;
     char* composer;
@@ -92,6 +94,13 @@ typedef struct mpris_properties {
     bool can_seek;
     bool shuffle;
 } mpris_properties;
+
+typedef struct mpris_player {
+    char *name;
+    char *namespace;
+    mpris_properties properties;
+    bool active;
+} mpris_player;
 
 void mpris_metadata_init(mpris_metadata* metadata)
 {
@@ -589,9 +598,10 @@ _unref_message_err:
     return properties;
 }
 
-char* get_player_namespace(DBusConnection* conn)
+int load_players(DBusConnection* conn, mpris_player *players)
 {
-    if (NULL == conn) { return NULL; }
+    if (NULL == conn) { return 0; }
+    if (NULL == players) { return 0; }
 
     char* player_namespace = NULL;
     char* method = DBUS_METHOD_LIST_NAMES;
@@ -605,7 +615,7 @@ char* get_player_namespace(DBusConnection* conn)
 
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
-    if (NULL == msg) { return NULL; }
+    if (NULL == msg) { return 0; }
 
     // send message and get a handle for a reply
     if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT)) {
@@ -624,21 +634,24 @@ char* get_player_namespace(DBusConnection* conn)
     reply = dbus_pending_call_steal_reply(pending);
     if (NULL == reply) { goto _unref_pending_err; }
 
+    int cnt = 0;
     DBusMessageIter rootIter;
     if (dbus_message_iter_init(reply, &rootIter) &&
         DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&rootIter)) {
         DBusMessageIter arrayElementIter;
 
         dbus_message_iter_recurse(&rootIter, &arrayElementIter);
-        while (true) {
+        while (cnt < MAX_PLAYERS) {
             if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayElementIter)) {
                 char* str;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
+                    ;
                     size_t len = strlen(str);
                     player_namespace = get_zero_string(len);
                     strncpy(player_namespace, str, len);
-                    break;
+                    players[cnt].namespace = player_namespace;
+                    cnt++;
                 }
             }
             if (!dbus_message_iter_has_next(&arrayElementIter)) {
@@ -653,7 +666,7 @@ char* get_player_namespace(DBusConnection* conn)
     // free message
     dbus_message_unref(msg);
 
-    return player_namespace;
+    return cnt;
 
 _unref_pending_err:
     {
@@ -664,5 +677,5 @@ _unref_message_err:
     {
         dbus_message_unref(msg);
     }
-    return NULL;
+    return 0;
 }
