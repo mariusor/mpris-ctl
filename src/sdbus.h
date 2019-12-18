@@ -649,7 +649,7 @@ int load_players(DBusConnection* conn, mpris_player *players)
                     ;
                     size_t len = strlen(str);
                     player_namespace = get_zero_string(len);
-                    strncpy(player_namespace, str, len);
+                    strncpy(player_namespace, str, len + 1);
                     players[cnt].namespace = player_namespace;
                     cnt++;
                 }
