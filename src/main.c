@@ -21,6 +21,7 @@
 #define CMD_PLAY_PAUSE  "pp"
 #define CMD_STATUS      "status"
 #define CMD_INFO        "info"
+#define ARG_PLAYER      "--player"
 
 #define INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
 #define INFO_FULL_STATUS    "Player name:\t" INFO_PLAYER_NAME "\n" \
@@ -62,8 +63,18 @@
 #define TRUE_LABEL      "true"
 #define FALSE_LABEL     "false"
 
+#define PLAYER_ACTIVE    "active"
+#define PLAYER_INACTIVE  "inactive"
+#define PLAYER_ALL       "all"
+
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " NAME|" PLAYER_ACTIVE "|" PLAYER_INACTIVE "|" PLAYER_ALL "] COMMAND - Control running MPRIS player\n" \
+"Options:\n" \
+ARG_PLAYER " NAME\t\tExecute command for the NAME player\n" \
+"         "PLAYER_ACTIVE"\t\tExecute command for the active player\n" \
+"         "PLAYER_INACTIVE"\tExecute command for the active player\n" \
+"         "PLAYER_ALL"\t\tExecute command for all players\n" \
+"\n" \
 "Commands:\n"\
 "\t" CMD_HELP "\t\tThis help message\n" \
 "\t" CMD_PLAY "\t\tBegin playing\n" \
@@ -75,8 +86,8 @@
 "\t" CMD_STATUS "\t\tGet the playback status\n" \
 "\t\t\t- equivalent to " CMD_INFO " \"%s\"\n" \
 "\t" CMD_INFO "\t\t<format> Display information about the current track\n" \
-"\t\t\t- default value\"%s\"\n\n" \
-"Format specifiers:\n" \
+"\t\t\t- default value \"%s\"\n\n" \
+"Format specifiers for " CMD_INFO " command:\n" \
 "\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" INFO_TRACK_NUMBER "\tprints the track number\n" \
