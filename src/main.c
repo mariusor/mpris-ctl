@@ -2,6 +2,7 @@
  * @author Marius Orcsik <marius@habarnam.ro>
  */
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -231,17 +232,73 @@ int main(int argc, char** argv)
     if (argc <= 1) {
         goto _help;
     }
+    bool show_help = false;
+    bool active_players = false;
+    bool inactive_players = false;
+    char *player_name = NULL;
 
-    char *command = argv[1];
-    if (strcmp(command, CMD_HELP) == 0) {
-        goto _help;
+    int option_index = 0;
+    static struct option long_options[] = {
+        {"player", required_argument, NULL, 1},
+        {"help", no_argument, NULL, 2},
+    };
+    bool invalid_player_type = false;
+    while (true) {
+        int char_arg = getopt_long(argc, argv, "", long_options, &option_index);
+        if (char_arg == -1) { break; }
+        switch (char_arg) {
+            case 1:
+                if (strncmp(optarg, PLAYER_ACTIVE, strlen(PLAYER_ACTIVE)) == 0) {
+                    active_players = true;
+                    continue;
+                }
+                if (strncmp(optarg, PLAYER_INACTIVE, strlen(PLAYER_INACTIVE)) == 0) {
+                    inactive_players = true;
+                    continue;
+                }
+                if (
+                    strncmp(optarg, CMD_INFO, strlen(CMD_INFO)) == 0 ||
+                    strncmp(optarg, CMD_HELP, strlen(CMD_HELP)) == 0 ||
+                    strncmp(optarg, CMD_STATUS, strlen(CMD_STATUS)) == 0 ||
+                    strncmp(optarg, CMD_NEXT, strlen(CMD_NEXT)) == 0 ||
+                    strncmp(optarg, CMD_PAUSE, strlen(CMD_PAUSE)) == 0 ||
+                    strncmp(optarg, CMD_PLAY, strlen(CMD_PLAY)) == 0 ||
+                    strncmp(optarg, CMD_PLAY_PAUSE, strlen(CMD_PLAY_PAUSE)) == 0 ||
+                    strncmp(optarg, CMD_PREVIOUS, strlen(CMD_PREVIOUS)) == 0 ||
+                    strncmp(optarg, CMD_STOP, strlen(CMD_STOP)) == 0
+                ) {
+                    invalid_player_type = true;
+                }
+                if (invalid_player_type) {
+                    fprintf(stderr, "Invalid player value '%s'\n", optarg);
+                    goto _error;
+                }
+                player_name = optarg;
+            break;
+            case 2:
+                show_help = true;
+            break;
+            default:
+                break;
+        }
     }
     char *info_format = INFO_DEFAULT_STATUS;
-    if (strcmp(command, CMD_INFO) == 0 && argc > 2) {
-        info_format = argv[2];
+    char *command = NULL;
+    if (optind < argc) {
+        command = argv[optind];
+        if (strncmp(command, CMD_HELP, strlen(CMD_HELP)) == 0) {
+            show_help = true;
+        }
+        if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && argc > optind+1) {
+            info_format = argv[optind+1];
+        }
+        if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
+            info_format = INFO_PLAYBACK_STATUS;
+        }
     }
-    if (strcmp(command, CMD_STATUS) == 0) {
-        info_format = INFO_PLAYBACK_STATUS;
+    if (show_help) {
+        // TODO(marius): add help subjects for each command
+        goto _help;
     }
 
     char *dbus_method = (char*)get_dbus_method(command);
@@ -274,15 +331,38 @@ int main(int argc, char** argv)
     if (found <= 0) { goto _dbus_error; }
 
     for (int i = 0; i < found; i++) {
-        char *destination = players[i].namespace;
+        mpris_player player = players[i];
+        get_mpris_properties(conn, player.namespace, &player.properties);
+        if (NULL == player.properties.playback_status) {
+            continue;
+        }
+        if (active_players) {
+            if (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) != 0) {
+                continue;
+            }
+        } else if (inactive_players) {
+            if (
+                strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) != 0 &&
+                strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) != 0
+            ) {
+                continue;
+            }
+        }
+        if (NULL != player_name) {
+            if (
+                    strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) != 0 &&
+                    strncmp(player.namespace, player_name, strlen(player.namespace)) != 0
+            ) {
+                continue;
+            }
+        }
         if (NULL == dbus_property) {
-            call_dbus_method(conn, destination,
+            call_dbus_method(conn, player.namespace,
                              MPRIS_PLAYER_PATH,
                              MPRIS_PLAYER_INTERFACE,
                              dbus_method);
         } else {
-            mpris_properties properties = get_mpris_properties(conn, destination);
-            print_mpris_info(&properties, info_format);
+            print_mpris_info(&player.properties, info_format);
         }
     }
 

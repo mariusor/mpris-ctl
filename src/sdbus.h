@@ -54,6 +54,10 @@
 #define MPRIS_METADATA_URL          "xesam:url"
 #define MPRIS_METADATA_YEAR         "year"
 
+#define MPRIS_METADATA_VALUE_STOPPED "Stopped"
+#define MPRIS_METADATA_VALUE_PLAYING "Playing"
+#define MPRIS_METADATA_VALUE_PAUSED  "Paused"
+
 // The default timeout leads to hangs when calling
 //   certain players which don't seem to reply to MPRIS methods
 #define DBUS_CONNECTION_TIMEOUT    100 //ms
@@ -463,13 +467,10 @@ _unref_message_err:
     return NULL;
 }
 
-mpris_properties get_mpris_properties(DBusConnection* conn, const char* destination)
+void get_mpris_properties(DBusConnection* conn, const char* destination, mpris_properties *properties)
 {
-    mpris_properties properties;
-    mpris_properties_init(&properties);
-
-    if (NULL == conn) { return properties; }
-    if (NULL == destination) { return properties; }
+    if (NULL == conn) { return; }
+    if (NULL == destination) { return; }
 
     DBusMessage* msg;
     DBusPendingCall* pending;
@@ -485,7 +486,7 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
 
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
-    if (NULL == msg) { return properties; }
+    if (NULL == msg) { return; }
 
     // append interface we want to get the property from
     dbus_message_iter_init_append(msg, &params);
@@ -531,40 +532,40 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
                 dbus_message_iter_next(&dictIter);
 
                 if (!strncmp(key, MPRIS_PNAME_CANCONTROL, strlen(MPRIS_PNAME_CANCONTROL))) {
-                     properties.can_control = extract_boolean_var(&dictIter, &err);
+                     properties->can_control = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGONEXT, strlen(MPRIS_PNAME_CANGONEXT))) {
-                     properties.can_go_next = extract_boolean_var(&dictIter, &err);
+                     properties->can_go_next = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGOPREVIOUS, strlen(MPRIS_PNAME_CANGOPREVIOUS))) {
-                   properties.can_go_previous = extract_boolean_var(&dictIter, &err);
+                   properties->can_go_previous = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANPAUSE, strlen(MPRIS_PNAME_CANPAUSE))) {
-                    properties.can_pause = extract_boolean_var(&dictIter, &err);
+                    properties->can_pause = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANPLAY, strlen(MPRIS_PNAME_CANPLAY))) {
-                    properties.can_play = extract_boolean_var(&dictIter, &err);
+                    properties->can_play = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANSEEK, strlen(MPRIS_PNAME_CANSEEK))) {
-                    properties.can_seek = extract_boolean_var(&dictIter, &err);
+                    properties->can_seek = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_LOOPSTATUS, strlen(MPRIS_PNAME_LOOPSTATUS))) {
-                    properties.loop_status = extract_string_var(&dictIter, &err);
+                    properties->loop_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_METADATA, strlen(MPRIS_PNAME_METADATA))) {
-                    properties.metadata = load_metadata(&dictIter);
+                    properties->metadata = load_metadata(&dictIter);
                 }
                 if (!strncmp(key, MPRIS_PNAME_PLAYBACKSTATUS, strlen(MPRIS_PNAME_PLAYBACKSTATUS))) {
-                     properties.playback_status = extract_string_var(&dictIter, &err);
+                     properties->playback_status = extract_string_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_POSITION, strlen(MPRIS_PNAME_POSITION))) {
-                      properties.position= extract_int64_var(&dictIter, &err);
+                      properties->position= extract_int64_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_SHUFFLE, strlen(MPRIS_PNAME_SHUFFLE))) {
-                    properties.shuffle = extract_boolean_var(&dictIter, &err);
+                    properties->shuffle = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_VOLUME, strlen(MPRIS_PNAME_VOLUME))) {
-                     properties.volume = extract_double_var(&dictIter, &err);
+                     properties->volume = extract_double_var(&dictIter, &err);
                 }
                 if (dbus_error_is_set(&err)) {
                     //fprintf(stderr, "error: %s\n", err.message);
@@ -583,8 +584,8 @@ mpris_properties get_mpris_properties(DBusConnection* conn, const char* destinat
     // free message
     dbus_message_unref(msg);
 
-    properties.player_name = get_player_identity(conn, destination);
-    return properties;
+    properties->player_name = get_player_identity(conn, destination);
+    return;
 
 _unref_pending_err:
     {
@@ -595,7 +596,7 @@ _unref_message_err:
     {
         dbus_message_unref(msg);
     }
-    return properties;
+    return;
 }
 
 int load_players(DBusConnection* conn, mpris_player *players)
