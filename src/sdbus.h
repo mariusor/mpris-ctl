@@ -101,7 +101,7 @@ typedef struct mpris_properties {
 
 typedef struct mpris_player {
     char *name;
-    char *namespace;
+    char namespace[MAX_OUTPUT_LENGTH];
     mpris_properties properties;
     bool active;
 } mpris_player;
@@ -604,7 +604,6 @@ int load_players(DBusConnection* conn, mpris_player *players)
     if (NULL == conn) { return 0; }
     if (NULL == players) { return 0; }
 
-    char* player_namespace = NULL;
     char* method = DBUS_METHOD_LIST_NAMES;
     char* destination = DBUS_DESTINATION;
     char* path = DBUS_PATH;
@@ -649,9 +648,7 @@ int load_players(DBusConnection* conn, mpris_player *players)
                 if (!strncmp(str, mpris_namespace, strlen(mpris_namespace))) {
                     ;
                     size_t len = strlen(str);
-                    player_namespace = get_zero_string(len);
-                    strncpy(player_namespace, str, len + 1);
-                    players[cnt].namespace = player_namespace;
+                    strncpy(players[cnt].namespace, str, len + 1);
                     cnt++;
                 }
             }

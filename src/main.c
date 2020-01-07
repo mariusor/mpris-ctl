@@ -310,7 +310,7 @@ int main(int argc, char** argv)
     dbus_property = (char*)get_dbus_property_name(command);
 
     DBusConnection* conn;
-    DBusError err;
+    DBusError err = {0};
 
     // initialise the errors
     dbus_error_init(&err);
