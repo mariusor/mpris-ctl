@@ -13,4 +13,4 @@ tasks:
       cd mpris-ctl
       make check_leak
       make check_undefined
-      make check_memory
+#      make check_memory
