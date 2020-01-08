@@ -235,7 +235,8 @@ int main(int argc, char** argv)
     bool show_help = false;
     bool active_players = false;
     bool inactive_players = false;
-    char *player_name = NULL;
+    char *player_names[MAX_PLAYERS] = {0};
+    int player_count = 0;
 
     int option_index = 0;
     static struct option long_options[] = {
@@ -256,24 +257,28 @@ int main(int argc, char** argv)
                     inactive_players = true;
                     continue;
                 }
-                if (
-                    strncmp(optarg, CMD_INFO, strlen(CMD_INFO)) == 0 ||
-                    strncmp(optarg, CMD_HELP, strlen(CMD_HELP)) == 0 ||
-                    strncmp(optarg, CMD_STATUS, strlen(CMD_STATUS)) == 0 ||
-                    strncmp(optarg, CMD_NEXT, strlen(CMD_NEXT)) == 0 ||
-                    strncmp(optarg, CMD_PAUSE, strlen(CMD_PAUSE)) == 0 ||
-                    strncmp(optarg, CMD_PLAY, strlen(CMD_PLAY)) == 0 ||
-                    strncmp(optarg, CMD_PLAY_PAUSE, strlen(CMD_PLAY_PAUSE)) == 0 ||
-                    strncmp(optarg, CMD_PREVIOUS, strlen(CMD_PREVIOUS)) == 0 ||
-                    strncmp(optarg, CMD_STOP, strlen(CMD_STOP)) == 0
-                ) {
-                    invalid_player_type = true;
+                optind--;
+                for( ;optind < argc && *argv[optind] != '-'; optind++){
+                    optarg = argv[optind];
+                    if (
+                        strncmp(optarg, CMD_INFO, strlen(CMD_INFO)) == 0 ||
+                        strncmp(optarg, CMD_HELP, strlen(CMD_HELP)) == 0 ||
+                        strncmp(optarg, CMD_STATUS, strlen(CMD_STATUS)) == 0 ||
+                        strncmp(optarg, CMD_NEXT, strlen(CMD_NEXT)) == 0 ||
+                        strncmp(optarg, CMD_PAUSE, strlen(CMD_PAUSE)) == 0 ||
+                        strncmp(optarg, CMD_PLAY, strlen(CMD_PLAY)) == 0 ||
+                        strncmp(optarg, CMD_PLAY_PAUSE, strlen(CMD_PLAY_PAUSE)) == 0 ||
+                        strncmp(optarg, CMD_PREVIOUS, strlen(CMD_PREVIOUS)) == 0 ||
+                        strncmp(optarg, CMD_STOP, strlen(CMD_STOP)) == 0
+                    ) {
+                        break;
+                    }
+                    player_names[player_count++] = optarg;
                 }
                 if (invalid_player_type) {
                     fprintf(stderr, "Invalid player value '%s'\n", optarg);
                     goto _error;
                 }
-                player_name = optarg;
             break;
             case 2:
                 show_help = true;
@@ -348,13 +353,20 @@ int main(int argc, char** argv)
                 continue;
             }
         }
-        if (NULL != player_name) {
-            if (
-                    strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) != 0 &&
-                    strncmp(player.namespace, player_name, strlen(player.namespace)) != 0
-            ) {
-                continue;
+        bool skip = true;
+        for (int i = 0; i < player_count; i++) {
+            char *player_name = player_names[i];
+            if (NULL != player_name) {
+                if (
+                        strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) == 0 ||
+                        strncmp(player.namespace, player_name, strlen(player.namespace)) == 0
+                ) {
+                    skip = false;
+                }
             }
+        }
+        if (skip) {
+            continue;
         }
         if (NULL == dbus_property) {
             call_dbus_method(conn, player.namespace,
