@@ -228,6 +228,8 @@ error_pos_label:
 
 int main(int argc, char** argv)
 {
+    int status = EXIT_FAILURE;
+
     char* name = argv[0];
     if (argc <= 1) {
         goto _help;
@@ -235,7 +237,7 @@ int main(int argc, char** argv)
     bool show_help = false;
     bool active_players = false;
     bool inactive_players = false;
-    char *player_names[MAX_PLAYERS] = {0};
+    char player_names[MAX_PLAYERS][MAX_OUTPUT_LENGTH] = {0};
     int player_count = 0;
 
     int option_index = 0;
@@ -273,11 +275,11 @@ int main(int argc, char** argv)
                     ) {
                         break;
                     }
-                    player_names[player_count++] = optarg;
+                    strncpy((char*)(player_names[player_count++]), optarg, MAX_OUTPUT_LENGTH);
                 }
                 if (invalid_player_type) {
                     fprintf(stderr, "Invalid player value '%s'\n", optarg);
-                    goto _error;
+                    goto _exit;
                 }
             break;
             case 2:
@@ -286,6 +288,10 @@ int main(int argc, char** argv)
             default:
                 break;
         }
+    }
+    if (!active_players && !inactive_players) {
+        active_players = true;
+        inactive_players = true;
     }
     char *info_format = INFO_DEFAULT_STATUS;
     char *command = NULL;
@@ -309,58 +315,42 @@ int main(int argc, char** argv)
     char *dbus_method = (char*)get_dbus_method(command);
     if (NULL == dbus_method) {
         //fprintf(stderr, "Invalid command %s (use help for help)\n", command);
-        goto _error;
+        goto _exit;
     }
-    char *dbus_property = NULL;
-    dbus_property = (char*)get_dbus_property_name(command);
-
-    DBusConnection* conn;
-    DBusError err = {0};
 
     // initialise the errors
+    DBusError err = {0};
     dbus_error_init(&err);
 
     // connect to the system bus and check for errors
-    conn = dbus_bus_get_private(DBUS_BUS_SESSION, &err);
+    DBusConnection *conn = dbus_bus_get_private(DBUS_BUS_SESSION, &err);
     if (dbus_error_is_set(&err)) {
-        //fprintf(stderr, "Connection error(%s)\n", err.message);
+        fprintf(stderr, "DBus connection error(%s)\n", err.message);
         dbus_error_free(&err);
     }
     if (NULL == conn) {
-        goto _error;
+        goto _exit;
     }
 
     mpris_player players[MAX_PLAYERS];
-
     int found = load_players(conn, players);
-    if (found <= 0) { goto _dbus_error; }
-
     for (int i = 0; i < found; i++) {
         mpris_player player = players[i];
-        get_mpris_properties(conn, player.namespace, &player.properties);
-        if (NULL == player.properties.playback_status) {
-            continue;
-        }
-        if (active_players) {
-            if (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) != 0) {
-                continue;
-            }
-        } else if (inactive_players) {
-            if (
-                strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) != 0 &&
-                strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) != 0
-            ) {
-                continue;
-            }
-        }
+        load_mpris_properties(conn, player.namespace, &player.properties);
         bool skip = true;
+        if (active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
+            skip = false;
+        }
+        if (inactive_players &&
+            (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
+            strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
+            skip = false;
+        }
         for (int i = 0; i < player_count; i++) {
             char *player_name = player_names[i];
             if (NULL != player_name) {
-                if (
-                        strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) == 0 ||
-                        strncmp(player.namespace, player_name, strlen(player.namespace)) == 0
-                ) {
+                if (strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) == 0 ||
+                   strncmp(player.namespace, player_name, strlen(player.namespace)) == 0) {
                     skip = false;
                 }
             }
@@ -368,36 +358,24 @@ int main(int argc, char** argv)
         if (skip) {
             continue;
         }
+        const char *dbus_property = (char*)get_dbus_property_name(command);
         if (NULL == dbus_property) {
-            call_dbus_method(conn, player.namespace,
-                             MPRIS_PLAYER_PATH,
-                             MPRIS_PLAYER_INTERFACE,
-                             dbus_method);
+            call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH,
+                             MPRIS_PLAYER_INTERFACE, dbus_method);
         } else {
             print_mpris_info(&player.properties, info_format);
         }
     }
+    status = EXIT_SUCCESS;
 
-    dbus_connection_close(conn);
-    dbus_connection_unref(conn);
-    _success:
-    {
-        return EXIT_SUCCESS;
-    }
-    _dbus_error: {
+    if (NULL != conn) {
         dbus_connection_close(conn);
         dbus_connection_unref(conn);
-
-        goto _error;
     }
-    _error:
-    {
-        return EXIT_FAILURE;
-    }
-    _help:
-    {
+_exit:
+    return status;
+_help:
         print_help(name);
-        goto _success;
-    }
+        goto _exit;
 }
 
