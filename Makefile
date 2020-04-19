@@ -26,7 +26,7 @@ ifneq ($(VERSION), )
 endif
 
 .PHONY: all
-all: release
+all: debug
 
 #.PHONY: check
 check: check_leak check_memory
