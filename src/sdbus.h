@@ -213,7 +213,7 @@ void extract_string_var(char* result, DBusMessageIter *iter, DBusError *error)
             if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayIter)) {
                 char *val = NULL;
                 dbus_message_iter_get_basic(&arrayIter, &val);
-                strncat(result, val, strlen(val)+1);
+                strncat(result, val, MAX_OUTPUT_LENGTH - strlen(result) - 1);
             }
             if (!dbus_message_iter_has_next(&arrayIter)) {
                 break;

@@ -19,8 +19,6 @@ void str_replace(char* source, const char* search, const char* replace)
     size_t se_len = strlen(search);
     if (se_len == 0) { return; }
 
-    size_t re_len = strlen(replace);
-
     if (se_len > so_len) { return; }
 
     size_t max_matches = so_len / se_len;
@@ -60,8 +58,7 @@ void str_replace(char* source, const char* search, const char* replace)
             strncat(result, source + source_iterator, non_match_len);
         }
         source_iterator = match + se_len;
-
-        strncat(result, replace, re_len);
+        strncat(result, replace, MAX_OUTPUT_LENGTH - strlen(result) - 1);
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
