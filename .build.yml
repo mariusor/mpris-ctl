@@ -9,4 +9,4 @@ tasks:
   - build: |
       cd mpris-ctl
       make check
-      make CC=clang check
+      make CC=clang check_leak check_undefined
