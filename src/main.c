@@ -39,7 +39,7 @@
 "Shuffle:\t" INFO_SHUFFLE_MODE "\n" \
 "Position:\t" INFO_POSITION "\n" \
 "Bitrate:\t" INFO_BITRATE "\n" \
-"Comment:\t" INFO_COMMENT "\n" \
+"Comment:\t" INFO_COMMENT \
 ""
 
 #define INFO_PLAYER_NAME     "%player_name"
@@ -205,7 +205,7 @@ void print_mpris_info(mpris_properties *props, const char* format)
     str_replace(output, INFO_COMMENT, props->metadata.comment);
     str_replace(output, INFO_ART_URL, props->metadata.art_url);
 
-    fprintf(stderr, "%s", output);
+    fprintf(stderr, "%s\n", output);
 }
 
 int main(int argc, char** argv)
