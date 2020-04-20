@@ -39,7 +39,7 @@
 "Shuffle:\t" INFO_SHUFFLE_MODE "\n" \
 "Position:\t" INFO_POSITION "\n" \
 "Bitrate:\t" INFO_BITRATE "\n" \
-"Comment:\t" INFO_COMMENT \
+"Comment:\t" INFO_COMMENT "\n" \
 ""
 
 #define INFO_PLAYER_NAME     "%player_name"
@@ -167,63 +167,45 @@ void print_help(char* name)
     fprintf(stdout, help_msg, version, name, status_def, info_def);
 }
 
-void print_mpris_info(mpris_properties *props, char* format)
+void print_mpris_info(mpris_properties *props, const char* format)
 {
     const char* info_full = INFO_FULL_STATUS;
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
-    char* volume_label = get_zero_string(4);
-    if (NULL == volume_label) { return; }
+    char volume_label[5];
     snprintf(volume_label, 5, "%.2f", props->volume);
-    char* pos_label = get_zero_string(10);
-    if (NULL == pos_label) { goto error_pos_label; }
+    char pos_label[11];
     snprintf(pos_label, 11, "%.2lfs", (props->position / 1000000.0));
-    char* track_number_label = get_zero_string(6);
-    if (NULL == track_number_label) { goto error_track_number_label; }
+    char track_number_label[6];
     snprintf(track_number_label, 6, "%d", props->metadata.track_number);
-    char* bitrate_label = get_zero_string(6);
-    if (NULL == bitrate_label) { goto error_bitrate_label; }
+    char bitrate_label[6];
     snprintf(bitrate_label, 6, "%d", props->metadata.bitrate);
-    char* length_label = get_zero_string(15);
+    char length_label[15];
     snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
-    if (NULL == length_label) { goto error_length_label; }
 
-    char* output = get_zero_string(MAX_OUTPUT_LENGTH);
-    if (NULL == output) { goto error_output; }
-    strncpy(output, format, MAX_OUTPUT_LENGTH);
+    char output[MAX_OUTPUT_LENGTH];
+    strncpy((char*)&output, format, MAX_OUTPUT_LENGTH);
 
-    output = str_replace(output, "\\n", "\n");
-    output = str_replace(output, "\\t", "\t");
+    str_replace(output, "\\n", "\n");
+    str_replace(output, "\\t", "\t");
 
-    output = str_replace(output, INFO_FULL, info_full);
+    str_replace(output, INFO_FULL, info_full);
+    str_replace(output, INFO_PLAYER_NAME, props->player_name);
+    str_replace(output, INFO_SHUFFLE_MODE, shuffle_label);
+    str_replace(output, INFO_PLAYBACK_STATUS, props->playback_status);
+    str_replace(output, INFO_VOLUME, volume_label);
+    str_replace(output, INFO_LOOP_STATUS, props->loop_status);
+    str_replace(output, INFO_POSITION, pos_label);
+    str_replace(output, INFO_TRACK_NAME, props->metadata.title);
+    str_replace(output, INFO_ARTIST_NAME, props->metadata.artist);
+    str_replace(output, INFO_ALBUM_ARTIST, props->metadata.album_artist);
+    str_replace(output, INFO_ALBUM_NAME, props->metadata.album);
+    str_replace(output, INFO_TRACK_LENGTH, length_label);
+    str_replace(output, INFO_TRACK_NUMBER, track_number_label);
+    str_replace(output, INFO_BITRATE, bitrate_label);
+    str_replace(output, INFO_COMMENT, props->metadata.comment);
+    str_replace(output, INFO_ART_URL, props->metadata.art_url);
 
-    output = str_replace(output, INFO_PLAYER_NAME, props->player_name);
-    output = str_replace(output, INFO_SHUFFLE_MODE, shuffle_label);
-    output = str_replace(output, INFO_PLAYBACK_STATUS, props->playback_status);
-    output = str_replace(output, INFO_VOLUME, volume_label);
-    output = str_replace(output, INFO_LOOP_STATUS, props->loop_status);
-    output = str_replace(output, INFO_POSITION, pos_label);
-    output = str_replace(output, INFO_TRACK_NAME, props->metadata.title);
-    output = str_replace(output, INFO_ARTIST_NAME, props->metadata.artist);
-    output = str_replace(output, INFO_ALBUM_ARTIST, props->metadata.album_artist);
-    output = str_replace(output, INFO_ALBUM_NAME, props->metadata.album);
-    output = str_replace(output, INFO_TRACK_LENGTH, length_label);
-    output = str_replace(output, INFO_TRACK_NUMBER, track_number_label);
-    output = str_replace(output, INFO_BITRATE, bitrate_label);
-    output = str_replace(output, INFO_COMMENT, props->metadata.comment);
-    output = str_replace(output, INFO_ART_URL, props->metadata.art_url);
-
-    fprintf(stdout, "%s\n", output);
-    free(output);
-error_output:
-    free(length_label);
-error_length_label:
-    free(bitrate_label);
-error_bitrate_label:
-    free(track_number_label);
-error_track_number_label:
-    free(pos_label);
-error_pos_label:
-    free(volume_label);
+    fprintf(stderr, "%s", output);
 }
 
 int main(int argc, char** argv)
@@ -332,7 +314,7 @@ int main(int argc, char** argv)
         goto _exit;
     }
 
-    mpris_player players[MAX_PLAYERS];
+    mpris_player players[MAX_PLAYERS] = {0};
     int found = load_players(conn, players);
     for (int i = 0; i < found; i++) {
         mpris_player player = players[i];

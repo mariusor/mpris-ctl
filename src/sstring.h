@@ -6,27 +6,22 @@
 
 #define MAX_OUTPUT_LENGTH 1024
 
-char* get_zero_string(size_t length)
+void str_replace(char* source, const char* search, const char* replace)
 {
-    return (char*)calloc(1, sizeof(char) * (length + 1));
-}
-
-char* str_replace(char* source, const char* search, const char* replace)
-{
-    if (NULL == source) { return source; }
+    if (NULL == source) { return; }
     size_t so_len = strlen(source);
 
-    if (so_len == 0) { return 0; }
+    if (so_len == 0) { return; }
 
-    if (NULL == search) { return source; }
-    if (NULL == replace) { return source; }
+    if (NULL == search) { return; }
+    if (NULL == replace) { return; }
 
     size_t se_len = strlen(search);
-    if (se_len == 0) { return source; }
+    if (se_len == 0) { return; }
 
     size_t re_len = strlen(replace);
 
-    if (se_len > so_len) { return source; }
+    if (se_len > so_len) { return; }
 
     size_t max_matches = so_len / se_len;
 
@@ -51,15 +46,10 @@ char* str_replace(char* source, const char* search, const char* replace)
         }
     }
     if (matches_cnt == 0) {
-        return source;
+        return;
     }
 
-    // use new string of the correct length
-    size_t new_len = (so_len - matches_cnt * se_len + matches_cnt * re_len);
-    char* result = get_zero_string(new_len);
-    if (NULL == result) {
-        return source;
-    }
+    char result[MAX_OUTPUT_LENGTH] = {0};
 
     size_t source_iterator = 0;
     size_t result_iterator = 0;
@@ -75,7 +65,6 @@ char* str_replace(char* source, const char* search, const char* replace)
 
         strncpy(result + result_iterator, replace, re_len);
         result_iterator += re_len;
-
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
@@ -83,7 +72,5 @@ char* str_replace(char* source, const char* search, const char* replace)
         strncpy(result + result_iterator, source + source_iterator, remaining_len);
         result_iterator += remaining_len;
     }
-    // we free the old string mem
-    free(source);
-    return result;
+    strncpy(source, result, MAX_OUTPUT_LENGTH);
 }
