@@ -65,6 +65,10 @@
 #define MAX_PLAYERS 20
 
 typedef struct mpris_metadata {
+    uint64_t length; // mpris specific
+    unsigned short track_number;
+    unsigned short bitrate;
+    unsigned short disc_number;
     char album_artist[MAX_OUTPUT_LENGTH];
     char composer[MAX_OUTPUT_LENGTH];
     char genre[MAX_OUTPUT_LENGTH];
@@ -76,20 +80,12 @@ typedef struct mpris_metadata {
     char title[MAX_OUTPUT_LENGTH];
     char url[MAX_OUTPUT_LENGTH];
     char art_url[MAX_OUTPUT_LENGTH]; //mpris specific
-    uint64_t length; // mpris specific
-    unsigned short track_number;
-    unsigned short bitrate;
-    unsigned short disc_number;
 
 } mpris_metadata;
 
 typedef struct mpris_properties {
-    mpris_metadata metadata;
     double volume;
     uint64_t position;
-    char player_name[MAX_OUTPUT_LENGTH];
-    char loop_status[MAX_OUTPUT_LENGTH];
-    char playback_status[MAX_OUTPUT_LENGTH];
     bool can_control;
     bool can_go_next;
     bool can_go_previous;
@@ -97,6 +93,10 @@ typedef struct mpris_properties {
     bool can_pause;
     bool can_seek;
     bool shuffle;
+    char player_name[MAX_OUTPUT_LENGTH];
+    char loop_status[MAX_OUTPUT_LENGTH];
+    char playback_status[MAX_OUTPUT_LENGTH];
+    mpris_metadata metadata;
 } mpris_properties;
 
 typedef struct mpris_player {

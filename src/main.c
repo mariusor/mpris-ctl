@@ -182,8 +182,8 @@ void print_mpris_info(mpris_properties *props, const char* format)
     char length_label[15];
     snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
 
-    char output[MAX_OUTPUT_LENGTH];
-    memcpy(&output, format, MAX_OUTPUT_LENGTH - 1);
+    char output[MAX_OUTPUT_LENGTH*10];
+    memcpy(output, format, strlen(format) + 1);
 
     str_replace(output, "\\n", "\n");
     str_replace(output, "\\t", "\t");
