@@ -183,7 +183,7 @@ void print_mpris_info(mpris_properties *props, const char* format)
     snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
 
     char output[MAX_OUTPUT_LENGTH];
-    strncpy((char*)&output, format, MAX_OUTPUT_LENGTH);
+    memcpy(&output, format, MAX_OUTPUT_LENGTH - 1);
 
     str_replace(output, "\\n", "\n");
     str_replace(output, "\\t", "\t");
@@ -257,7 +257,7 @@ int main(int argc, char** argv)
                     ) {
                         break;
                     }
-                    strncpy((char*)(player_names[player_count++]), optarg, MAX_OUTPUT_LENGTH);
+                    memcpy(player_names[player_count++], optarg, MAX_OUTPUT_LENGTH - 1);
                 }
                 if (invalid_player_type) {
                     fprintf(stderr, "Invalid player value '%s'\n", optarg);

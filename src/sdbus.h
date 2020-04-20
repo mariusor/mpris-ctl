@@ -112,17 +112,12 @@ void mpris_metadata_init(mpris_metadata* metadata)
     metadata->bitrate = 0;
     metadata->disc_number = 0;
     metadata->length = 0;
-    strncpy(metadata->album_artist, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->composer, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->genre, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->artist, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->album, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->title, "unknown", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->comment, " ", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->track_id, " ", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->content_created, " ", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->url, "", MAX_OUTPUT_LENGTH);
-    strncpy(metadata->art_url, "", MAX_OUTPUT_LENGTH);
+    memcpy(metadata->album_artist, "unknown", 8);
+    memcpy(metadata->composer, "unknown", 8);
+    memcpy(metadata->genre, "unknown", 8);
+    memcpy(metadata->artist, "unknown", 8);
+    memcpy(metadata->album, "unknown", 8);
+    memcpy(metadata->title, "unknown", 8);
 }
 
 void mpris_properties_unref(mpris_properties *properties)
@@ -204,11 +199,11 @@ void extract_string_var(char* result, DBusMessageIter *iter, DBusError *error)
     if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&variantIter)) {
         char *val = NULL;
         dbus_message_iter_get_basic(&variantIter, &val);
-        strncpy(result, val, MAX_OUTPUT_LENGTH);
+        memcpy(result, val, MAX_OUTPUT_LENGTH - 1);
     } else if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&variantIter)) {
         char *val = NULL;
         dbus_message_iter_get_basic(&variantIter, &val);
-        strncpy(result, val, MAX_OUTPUT_LENGTH);
+        memcpy(result, val, MAX_OUTPUT_LENGTH - 1);
     } else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&variantIter)) {
         DBusMessageIter arrayIter;
         dbus_message_iter_recurse(&variantIter, &arrayIter);
@@ -217,7 +212,7 @@ void extract_string_var(char* result, DBusMessageIter *iter, DBusError *error)
             if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&arrayIter)) {
                 char *val = NULL;
                 dbus_message_iter_get_basic(&arrayIter, &val);
-                strncat(result, val, strlen(val));
+                strncat(result, val, strlen(val)+1);
             }
             if (!dbus_message_iter_has_next(&arrayIter)) {
                 break;
@@ -608,7 +603,7 @@ int load_players(DBusConnection* conn, mpris_player *players)
                 char *str = NULL;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, MPRIS_PLAYER_NAMESPACE, strlen(MPRIS_PLAYER_NAMESPACE))) {
-                    strncpy(players[cnt].namespace, str, MAX_OUTPUT_LENGTH);
+                    memcpy(players[cnt].namespace, str, MAX_OUTPUT_LENGTH-1);
                     cnt++;
                 }
             }

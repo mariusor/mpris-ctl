@@ -52,25 +52,21 @@ void str_replace(char* source, const char* search, const char* replace)
     char result[MAX_OUTPUT_LENGTH] = {0};
 
     size_t source_iterator = 0;
-    size_t result_iterator = 0;
     for (size_t i = 0; i < matches_cnt; i++) {
         size_t match = matches[i];
 
         if (source_iterator < match) {
             size_t non_match_len = match - source_iterator;
-            strncpy(result + result_iterator, source + source_iterator, non_match_len);
-            result_iterator += non_match_len;
+            strncat(result, source + source_iterator, non_match_len);
         }
         source_iterator = match + se_len;
 
-        strncpy(result + result_iterator, replace, re_len);
-        result_iterator += re_len;
+        strncat(result, replace, re_len);
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
         size_t remaining_len = so_len - source_iterator;
-        strncpy(result + result_iterator, source + source_iterator, remaining_len);
-        result_iterator += remaining_len;
+        strncat(result, source + source_iterator, remaining_len);
     }
-    strncpy(source, result, MAX_OUTPUT_LENGTH);
+    memcpy(source, result, MAX_OUTPUT_LENGTH-1);
 }
