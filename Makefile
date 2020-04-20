@@ -28,24 +28,27 @@ endif
 .PHONY: all
 all: debug
 
-#.PHONY: check
-check: check_leak check_memory
+.PHONY: check
+check: check_leak check_undefined
+ifeq ($(CC),clang)
+.PHONY: check
+check: check_leak check_undefined check_memory
+endif
 
 .PHONY: check_leak
-check_leak: $(BIN_NAME)
 check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
-check_leak: export BIN_NAME := mpris-ctl-leak
-check_leak: run clean
+check_leak:
+	$(MAKE) BIN_NAME=mpris-ctl-leak run clean
 
 .PHONY: check_memory
 check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
-check_leak: export BIN_NAME := mpris-ctl-mem
-check_memory: run clean
+check_memory:
+	$(MAKE) BIN_NAME=mpris-ctl-mem run clean
 
 .PHONY: check_undefined
 check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
-check_leak: export BIN_NAME := mpris-ctl-undef
-check_undefined: run clean
+check_undefined:
+	$(MAKE) BIN_NAME=mpris-ctl-undef run clean
 
 .PHONY: run
 run: $(BIN_NAME)
