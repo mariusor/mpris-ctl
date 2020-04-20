@@ -15,33 +15,45 @@ Its only build/run dependency is on the [C dbus library](https://dbus.freedeskto
 To build from source just clone the repository and run make. 
 By default the binary is installed in **/usr/local/bin**, but you can provide your own DESTDIR and INSTALL_PREFIX.
 
-````
+```sh
 $ git clone https://github.com/mariusor/mpris-ctl.git
 $ cd mpris-ctl
 $ make 
 # make install
-````
+```
 
 ## Usage
 
 An example of configuration for i3/sway:
 
-````
+```
 bindsym XF86AudioPlay exec "mpris-ctl pp"
-bindsym XF86AudioStop exec "mpris-ctl stop"
-bindsym XF86AudioNext exec "mpris-ctl next"
-bindsym XF86AudioPrev exec "mpris-ctl prev"
-````
+bindsym XF86AudioStop exec "mpris-ctl --player active stop"
+bindsym XF86AudioNext exec "mpris-ctl --player active next"
+bindsym XF86AudioPrev exec "mpris-ctl --player active prev"
+```
+
+The `--player` flag supports passing multiple player names, or the values `active` or `inactive`. 
+The active players are considered to be the ones which have the `play_status` be `Playing`, 
+and the inactive ones are the ones with the `play_status` `Stopped` or `Paused`.
+
+Eg:
+
+```
+mpris-ctl --player Rhythmbox play
+mpris-ctl --player active pp
+mpris-ctl --player inactive play
+```
 
 A more advanced example could be (this requires a notify daemon to be running):
 
-````
+```
 set $mpris_notify notify-send "$(mpris-ctl info "%play_status")" \
     "$(mpris-ctl info "%artist_name: %track_name\nOn album '%album_name'")"
 bindsym $mod+XF86AudioPlay exec $mpris_notify
 # or even:
 bindsym XF86AudioPlay exec mpris-ctl pp && $mpris_notify
-````
+```
 
 Supported format specifiers for `mpris-ctl info` command:
 

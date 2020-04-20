@@ -6,11 +6,24 @@ MPRIS-CTL(1)
 
 # SYNOPSIS
 
-mpris-ctl [COMMAND] [format string]
+mpris-ctl [OPTIONS...] [COMMAND] [format string]
 
 # DESCRIPTION
 
 *mpris-ctl* is a control utility for any media-player that conforms to the *MPRIS D-Bus Interface Specification*[1]
+
+# OPTIONS
+
+*--player* active | inactive | <name,...>
+
+	Specifies which players the command should be addressed to. The valid values are:
+
+	*active*
+		all players that are currently in _Playing_ state.
+	*inactive*
+		all players that are currently in _Stopped_ or _Paused_ state.
+	<name...>
+		specific player names, separated by spaces.
 
 # COMMANDS
 
@@ -47,7 +60,7 @@ mpris-ctl [COMMAND] [format string]
 	prints the media-player's name
 
 *%track\_name*
-	prints the track name
+	prints the track's name
 
 *%track\_number*
 	prints the track number
@@ -56,13 +69,13 @@ mpris-ctl [COMMAND] [format string]
 	prints the track length in seconds
 
 *%artist\_name*
-	prints the artist name
+	prints the artist's name
 
 *%album\_name*
-	prints the album name
+	prints the album's name
 
 *%album\_artist*
-	prints the album artist
+	prints the album's artist
 
 *%art\_url*
 	prints the URL of the cover art image
@@ -74,13 +87,13 @@ mpris-ctl [COMMAND] [format string]
 	prints the shuffle mode
 
 *%volume*
-	prints the volume
+	prints the volume level
 
 *%loop\_status*
 	prints the loop status
 
 *%position*
-	prints the song position in seconds
+	prints the track's position in seconds
 
 *%bitrate*
 	prints the track's bit-rate
