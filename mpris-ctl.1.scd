@@ -14,10 +14,12 @@ mpris-ctl [OPTIONS...] [COMMAND] [format string]
 
 # OPTIONS
 
-*--player* active | inactive | <name,...>
+*--player* active | inactive | all | <name,...>
 
 	Specifies which players the command should be addressed to. The valid values are:
 
+	*all*
+		all players.
 	*active*
 		all players that are currently in _Playing_ state.
 	*inactive*
@@ -50,6 +52,9 @@ mpris-ctl [OPTIONS...] [COMMAND] [format string]
 
 *status*
 	Get the playback status. Equivalent to the *info %play\_status* action
+
+*list*
+	Get the name of the running player(s). Equivalent to the *info %player\_name* action
 
 *info* [format string]
 	Print information about the current track. *format string* can include any of the following *FORMAT SPECIFIERS*.

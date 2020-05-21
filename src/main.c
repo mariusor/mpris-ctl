@@ -21,6 +21,7 @@
 #define CMD_PREVIOUS    "prev"
 #define CMD_PLAY_PAUSE  "pp"
 #define CMD_STATUS      "status"
+#define CMD_LIST        "list"
 #define CMD_INFO        "info"
 #define ARG_PLAYER      "--player"
 
@@ -64,15 +65,17 @@
 #define TRUE_LABEL      "true"
 #define FALSE_LABEL     "false"
 
+#define PLAYER_ALL       "all"
 #define PLAYER_ACTIVE    "active"
 #define PLAYER_INACTIVE  "inactive"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s [" ARG_PLAYER " NAME|" PLAYER_ACTIVE "|" PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " NAME | " PLAYER_ALL " | " PLAYER_ACTIVE " | " PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
 "Options:\n" \
-ARG_PLAYER " NAME\t\tExecute command for the NAME player\n" \
+ARG_PLAYER " NAME\t\tExecute command for player named NAME\n" \
 "         "PLAYER_ACTIVE"\t\tExecute command for the active player(s)\n" \
 "         "PLAYER_INACTIVE"\tExecute command for the inactive player(s)\n" \
+"         "PLAYER_ALL"\t\tExecute command for all player(s)\n" \
 "\n" \
 "Commands:\n"\
 "\t" CMD_HELP "\t\tThis help message\n" \
@@ -82,10 +85,9 @@ ARG_PLAYER " NAME\t\tExecute command for the NAME player\n" \
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
-"\t" CMD_STATUS "\t\tGet the playback status\n" \
-"\t\t\t- equivalent to " CMD_INFO " \"%s\"\n" \
-"\t" CMD_INFO "\t\t<format> Display information about the current track\n" \
-"\t\t\t- default value \"%s\"\n\n" \
+"\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
+"\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
+"\t" CMD_INFO "\t\t<format> Display information about the current track - default format is '%s'\n" \
 "Format specifiers for " CMD_INFO " command:\n" \
 "\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" INFO_TRACK_NAME "\tprints the track name\n" \
@@ -122,6 +124,9 @@ const char* get_dbus_property_name (char* command)
     if (strcmp(command, CMD_INFO) == 0) {
         return MPRIS_PROP_METADATA;
     }
+    if (strcmp(command, CMD_LIST) == 0) {
+        return INFO_PLAYER_NAME;
+    }
 
     return NULL;
 }
@@ -148,7 +153,7 @@ const char* get_dbus_method (char* command)
     if (strcmp(command, CMD_PLAY_PAUSE) == 0) {
         return MPRIS_METHOD_PLAY_PAUSE;
     }
-    if (strcmp(command, CMD_STATUS) == 0 || strcmp(command, CMD_INFO) == 0) {
+    if (strcmp(command, CMD_STATUS) == 0 || strcmp(command, CMD_INFO) == 0 || strcmp(command, CMD_LIST) == 0) {
         return DBUS_PROPERTIES_INTERFACE;
     }
 
@@ -162,9 +167,8 @@ void print_help(char* name)
 
     help_msg = HELP_MESSAGE;
     char* info_def = INFO_DEFAULT_STATUS;
-    char* status_def = INFO_PLAYBACK_STATUS;
 
-    fprintf(stdout, help_msg, version, name, status_def, info_def);
+    fprintf(stdout, help_msg, version, name, info_def);
 }
 
 void print_mpris_info(mpris_properties *props, const char* format)
@@ -241,6 +245,11 @@ int main(int argc, char** argv)
                     inactive_players = true;
                     continue;
                 }
+                if (strncmp(optarg, PLAYER_ALL, strlen(PLAYER_ALL)) == 0) {
+                    active_players = true;
+                    inactive_players = true;
+                    continue;
+                }
                 optind--;
                 for( ;optind < argc && *argv[optind] != '-'; optind++){
                     optarg = argv[optind];
@@ -248,6 +257,7 @@ int main(int argc, char** argv)
                         strncmp(optarg, CMD_INFO, strlen(CMD_INFO)) == 0 ||
                         strncmp(optarg, CMD_HELP, strlen(CMD_HELP)) == 0 ||
                         strncmp(optarg, CMD_STATUS, strlen(CMD_STATUS)) == 0 ||
+                        strncmp(optarg, CMD_LIST, strlen(CMD_LIST)) == 0 ||
                         strncmp(optarg, CMD_NEXT, strlen(CMD_NEXT)) == 0 ||
                         strncmp(optarg, CMD_PAUSE, strlen(CMD_PAUSE)) == 0 ||
                         strncmp(optarg, CMD_PLAY, strlen(CMD_PLAY)) == 0 ||
@@ -287,6 +297,9 @@ int main(int argc, char** argv)
         }
         if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
             info_format = INFO_PLAYBACK_STATUS;
+        }
+        if (strncmp(command, CMD_LIST, strlen(CMD_LIST)) == 0) {
+            info_format = INFO_PLAYER_NAME;
         }
     }
     if (show_help) {
