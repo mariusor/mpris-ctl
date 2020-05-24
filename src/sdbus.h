@@ -187,7 +187,7 @@ double extract_double_var(DBusMessageIter *iter, DBusError *error)
     return 0;
 }
 
-void extract_string_var(char* result, DBusMessageIter *iter, DBusError *error)
+void extract_string_var(char result[MAX_OUTPUT_LENGTH], DBusMessageIter *iter, DBusError *error)
 {
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
         dbus_set_error_const(error, "iter_should_be_variant", "This message iterator must be have variant type");
@@ -200,11 +200,11 @@ void extract_string_var(char* result, DBusMessageIter *iter, DBusError *error)
     if (DBUS_TYPE_OBJECT_PATH == dbus_message_iter_get_arg_type(&variantIter)) {
         char *val = NULL;
         dbus_message_iter_get_basic(&variantIter, &val);
-        memcpy(result, val, MAX_OUTPUT_LENGTH - 1);
+        memcpy(result, val, strlen(val));
     } else if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&variantIter)) {
         char *val = NULL;
         dbus_message_iter_get_basic(&variantIter, &val);
-        memcpy(result, val, MAX_OUTPUT_LENGTH - 1);
+        memcpy(result, val, strlen(val));
     } else if (DBUS_TYPE_ARRAY == dbus_message_iter_get_arg_type(&variantIter)) {
         DBusMessageIter arrayIter;
         dbus_message_iter_recurse(&variantIter, &arrayIter);
@@ -350,7 +350,7 @@ void load_metadata(mpris_metadata *track, DBusMessageIter *iter)
                 extract_string_var(track->url, &dictIter, &err);
             }
             if (dbus_error_is_set(&err)) {
-                //fprintf(stderr, "err: %s, %s\n", key, err->message);
+                fprintf(stderr, "err: %s, %s\n", key, err.message);
                 dbus_error_free(&err);
             }
         }
@@ -494,13 +494,13 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
                 dbus_message_iter_next(&dictIter);
 
                 if (!strncmp(key, MPRIS_PNAME_CANCONTROL, strlen(MPRIS_PNAME_CANCONTROL))) {
-                     properties->can_control = extract_boolean_var(&dictIter, &err);
+                    properties->can_control = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGONEXT, strlen(MPRIS_PNAME_CANGONEXT))) {
-                     properties->can_go_next = extract_boolean_var(&dictIter, &err);
+                    properties->can_go_next = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANGOPREVIOUS, strlen(MPRIS_PNAME_CANGOPREVIOUS))) {
-                   properties->can_go_previous = extract_boolean_var(&dictIter, &err);
+                    properties->can_go_previous = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_CANPAUSE, strlen(MPRIS_PNAME_CANPAUSE))) {
                     properties->can_pause = extract_boolean_var(&dictIter, &err);
@@ -521,16 +521,16 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
                     extract_string_var(properties->playback_status, &dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_POSITION, strlen(MPRIS_PNAME_POSITION))) {
-                      properties->position= extract_int64_var(&dictIter, &err);
+                    properties->position= extract_int64_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_SHUFFLE, strlen(MPRIS_PNAME_SHUFFLE))) {
                     properties->shuffle = extract_boolean_var(&dictIter, &err);
                 }
                 if (!strncmp(key, MPRIS_PNAME_VOLUME, strlen(MPRIS_PNAME_VOLUME))) {
-                     properties->volume = extract_double_var(&dictIter, &err);
+                    properties->volume = extract_double_var(&dictIter, &err);
                 }
                 if (dbus_error_is_set(&err)) {
-                    //fprintf(stderr, "error: %s\n", err.message);
+                    fprintf(stderr, "error: %s\n", err.message);
                     dbus_error_free(&err);
                 }
             }
