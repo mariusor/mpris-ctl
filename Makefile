@@ -35,20 +35,32 @@ ifeq ($(CC),clang)
 check: check_leak check_undefined check_memory
 endif
 
+.PHONY: leak
+leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
+leak:
+	$(MAKE) BIN_NAME=mpris-ctl-leak
+
+.PHONY: memory
+memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
+memory:
+	$(MAKE) BIN_NAME=mpris-ctl-mem
+
+.PHONY: undefined
+undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
+undefined:
+	$(MAKE) BIN_NAME=mpris-ctl-undef
+
 .PHONY: check_leak
-check_leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
 check_leak:
-	$(MAKE) BIN_NAME=mpris-ctl-leak run clean
+	$(MAKE) leak run clean
 
 .PHONY: check_memory
-check_memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
 check_memory:
-	$(MAKE) BIN_NAME=mpris-ctl-mem run clean
+	$(MAKE) memory run clean
 
 .PHONY: check_undefined
-check_undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
 check_undefined:
-	$(MAKE) BIN_NAME=mpris-ctl-undef run clean
+	$(MAKE) undefined run clean
 
 .PHONY: run
 run: $(BIN_NAME)
