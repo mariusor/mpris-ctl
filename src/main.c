@@ -281,7 +281,7 @@ int main(int argc, char** argv)
                 break;
         }
     }
-    if (!active_players && !inactive_players) {
+    if (!active_players && !inactive_players && player_count == 0) {
         active_players = true;
         inactive_players = true;
     }
