@@ -69,10 +69,10 @@
 #define PLAYER_INACTIVE  "inactive"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s [" ARG_PLAYER " NAME | " PLAYER_ACTIVE " | " PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " <name,...> | " PLAYER_ACTIVE " | " PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
 "\n" \
 "Options:\n" \
-ARG_PLAYER " NAME\t\tExecute command only for player named NAME\n" \
+ARG_PLAYER " <name,...>\t\tExecute command only for player(s) named <name,...>\n" \
 "         "PLAYER_ACTIVE"\t\tExecute command only for the active player(s)\n" \
 "         "PLAYER_INACTIVE"\tExecute command only for the inactive player(s)\n" \
 "\n" \
@@ -84,15 +84,15 @@ ARG_PLAYER " NAME\t\tExecute command only for player named NAME\n" \
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
+"\t" CMD_INFO "\t\t<format> Display information about the current track - default format is '%s'\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
-"\t" CMD_INFO "\t\t<format> Display information about the current track - default format is '%s'\n" \
 "\n" \
 "Format specifiers for " CMD_INFO " command:\n" \
 "\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" INFO_TRACK_NUMBER "\tprints the track number\n" \
-"\t%" INFO_TRACK_LENGTH "\tprints the track length (useconds)\n" \
+"\t%" INFO_TRACK_LENGTH "\tprints the track length in seconds\n" \
 "\t%" INFO_ARTIST_NAME "\tprints the artist name\n" \
 "\t%" INFO_ALBUM_NAME "\tprints the album name\n" \
 "\t%" INFO_ALBUM_ARTIST "\tprints the album artist\n" \
@@ -101,7 +101,7 @@ ARG_PLAYER " NAME\t\tExecute command only for player named NAME\n" \
 "\t%" INFO_SHUFFLE_MODE "\tprints the shuffle mode\n" \
 "\t%" INFO_VOLUME "\t\tprints the volume\n" \
 "\t%" INFO_LOOP_STATUS "\tprints the loop status\n" \
-"\t%" INFO_POSITION "\tprints the song position (useconds)\n" \
+"\t%" INFO_POSITION "\tprints the song position in seconds\n" \
 "\t%" INFO_BITRATE "\tprints the track's bitrate\n" \
 "\t%" INFO_COMMENT "\tprints the track's comment\n" \
 "\t%" INFO_FULL "\t\tprints all available information\n" \
