@@ -339,8 +339,17 @@ int main(int argc, char** argv)
         for (int i = 0; i < player_count; i++) {
             char *player_name = player_names[i];
             if (NULL != player_name) {
-                if (strncmp(player.properties.player_name, player_name, strlen(player.properties.player_name)) == 0 ||
-                   strncmp(player.namespace, player_name, strlen(player.namespace)) == 0) {
+                size_t name_len = strlen(player_name);
+                size_t prop_name_len = strlen(player.properties.player_name);
+                size_t prop_ns_len = strlen(player.namespace);
+                if (prop_name_len < name_len) {
+                    prop_name_len = name_len ;
+                }
+                if (prop_ns_len < name_len) {
+                    prop_ns_len = name_len;
+                }
+                if (strncmp(player.properties.player_name, player_name, prop_name_len) == 0 ||
+                   strncmp(player.namespace, player_name, prop_ns_len) == 0) {
                     skip = false;
                 }
             }
