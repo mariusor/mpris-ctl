@@ -209,7 +209,7 @@ void print_mpris_info(mpris_properties *props, const char* format)
     str_replace(output, INFO_COMMENT, props->metadata.comment);
     str_replace(output, INFO_ART_URL, props->metadata.art_url);
 
-    fprintf(stderr, "%s\n", output);
+    fprintf(stdout, "%s\n", output);
 }
 
 int main(int argc, char** argv)
