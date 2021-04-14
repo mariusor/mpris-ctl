@@ -227,7 +227,7 @@ int main(int argc, char** argv)
     int player_count = 0;
 
     int option_index = 0;
-    static struct option long_options[] = {
+    static struct option long_options[2] = {
         {"player", required_argument, NULL, 1},
         {"help", no_argument, NULL, 2},
     };
