@@ -46,7 +46,7 @@ leak:
 	$(MAKE) BIN_NAME=mpris-ctl-leak
 	$(MAKE) BIN_NAME=mpris-ctl-leak run
 
-memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
+memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory -fsanitize-blacklist=sanitize-blacklist.txt -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer
 memory:
 	$(MAKE) BIN_NAME=mpris-ctl-memory
 	$(MAKE) BIN_NAME=mpris-ctl-memory run
@@ -78,7 +78,7 @@ release: $(BIN_NAME)
 debug: $(BIN_NAME)
 
 clean:
-	$(RM) $(BIN_NAME)
+	$(RM) $(BIN_NAME) $(BIN_NAME)-*
 	$(RM) $(BIN_NAME).1
 
 install: $(BIN_NAME) $(BIN_NAME).1
