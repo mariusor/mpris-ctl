@@ -227,9 +227,10 @@ int main(int argc, char** argv)
     int player_count = 0;
 
     int option_index = 0;
-    static struct option long_options[2] = {
-        {"player", required_argument, NULL, 1},
-        {"help", no_argument, NULL, 2},
+    static struct option long_options[] = {
+        {"player", required_argument, 0, 1},
+        {"help", no_argument, 0, 2},
+        {0, 0, 0, 0},
     };
     bool invalid_player_type = false;
     while (true) {
