@@ -25,46 +25,45 @@ ifneq ($(VERSION), )
 	override CFLAGS := $(CFLAGS) -DVERSION_HASH=\"$(VERSION)\"
 endif
 
-.PHONY: all
+.PHONY: all debug check memory undefined check_memory check_undefined check_leak run release debug clean install uninstall
+
 all: debug
 
-.PHONY: check
+ifneq ($(CC),clang)
+check_memory:
+	$(error Only clang supports memory sanitizer check, current compiler "$(CC)")
+
 check: check_leak check_undefined
-ifeq ($(CC),clang)
-.PHONY: check
+else
+check_memory:
+	$(MAKE) memory clean
+
 check: check_leak check_undefined check_memory
 endif
 
-.PHONY: leak
 leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
 leak:
 	$(MAKE) BIN_NAME=mpris-ctl-leak
+	$(MAKE) BIN_NAME=mpris-ctl-leak run
 
-.PHONY: memory
 memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory
 memory:
-	$(MAKE) BIN_NAME=mpris-ctl-mem
+	$(MAKE) BIN_NAME=mpris-ctl-memory
+	$(MAKE) BIN_NAME=mpris-ctl-memory run
 
-.PHONY: undefined
 undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
 undefined:
 	$(MAKE) BIN_NAME=mpris-ctl-undef
+	$(MAKE) BIN_NAME=mpris-ctl-undef run
 
-.PHONY: check_leak
 check_leak:
-	$(MAKE) leak run clean
+	$(MAKE) leak clean
 
-.PHONY: check_memory
-check_memory:
-	$(MAKE) memory run clean
-
-.PHONY: check_undefined
 check_undefined:
-	$(MAKE) undefined run clean
+	$(MAKE) undefined clean
 
-.PHONY: run
 run: $(BIN_NAME)
-	./$(BIN_NAME) info || test $$? -eq 1
+	./$(BIN_NAME) info %full || test $$? -eq 1
 
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
 release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
@@ -74,23 +73,18 @@ debug: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(DLINK_FLAGS)
 $(BIN_NAME).1: $(BIN_NAME).1.scd
 	scdoc < $< >$@
 
-.PHONY: release
 release: $(BIN_NAME)
 
-.PHONY: debug
 debug: $(BIN_NAME)
 
-.PHONY: clean
 clean:
 	$(RM) $(BIN_NAME)
 	$(RM) $(BIN_NAME).1
 
-.PHONY: install
 install: $(BIN_NAME) $(BIN_NAME).1
 	install $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
 	install -m 644 $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1
 
-.PHONY: uninstall
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1
