@@ -9,4 +9,5 @@ tasks:
   - build: |
       cd mpris-ctl
       make check
-      make CC=clang check_leak check_undefined
+      ## this needs libdbus and glibc to be built with the memory sanitizer, which is out of scope for the moment
+      #make CC=clang check
