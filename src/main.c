@@ -72,7 +72,7 @@
 "Usage:\n  %s [" ARG_PLAYER " <name,...> | " PLAYER_ACTIVE " | " PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
 "\n" \
 "Options:\n" \
-ARG_PLAYER " <name,...>\t\tExecute command only for player(s) named <name,...>\n" \
+ARG_PLAYER " <name,...>\tExecute command only for player(s) named <name,...>\n" \
 "         "PLAYER_ACTIVE"\t\tExecute command only for the active player(s)\n" \
 "         "PLAYER_INACTIVE"\tExecute command only for the inactive player(s)\n" \
 "\n" \
