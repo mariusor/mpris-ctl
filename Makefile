@@ -79,8 +79,8 @@ clean:
 	$(RM) $(BIN_NAME).1
 
 install: $(BIN_NAME) $(BIN_NAME).1
-	install -m 755 -D $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin
-	install -m 644 -D $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1
+	install -m 755 -D $(BIN_NAME) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
+	install -m 644 -D $(BIN_NAME).1 $(DESTDIR)$(INSTALL_PREFIX)/$(MAN_DIR)/man1/$(BIN_NAME).1
 
 uninstall:
 	$(RM) $(DESTDIR)$(INSTALL_PREFIX)/bin/$(BIN_NAME)
