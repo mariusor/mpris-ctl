@@ -120,12 +120,6 @@ void mpris_metadata_init(mpris_metadata* metadata)
     memcpy(metadata->title, "unknown", 8);
 }
 
-void mpris_properties_unref(mpris_properties *properties)
-{
-    free(&(properties->metadata));
-    free(properties);
-}
-
 DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
 {
     if (NULL == conn) { return NULL; }
