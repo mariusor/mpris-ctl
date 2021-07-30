@@ -73,7 +73,7 @@
 "\n" \
 "Options:\n" \
 ARG_PLAYER " <name,...>\tExecute command only for player(s) named <name,...>\n" \
-"         "PLAYER_ACTIVE"\t\tExecute command only for the active player(s)\n" \
+"         "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (default)\n" \
 "         "PLAYER_INACTIVE"\tExecute command only for the inactive player(s)\n" \
 "\n" \
 "Commands:\n"\
@@ -279,7 +279,7 @@ int main(int argc, char** argv)
     }
     if (!active_players && !inactive_players && player_count == 0) {
         active_players = true;
-        inactive_players = true;
+        inactive_players = false;
     }
     char *info_format = INFO_DEFAULT_STATUS;
     char *command = NULL;
