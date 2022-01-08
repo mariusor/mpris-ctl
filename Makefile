@@ -29,6 +29,26 @@ endif
 
 all: debug
 
+check: check_leak check_undefined check_memory
+
+leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
+leak:
+	$(MAKE) BIN_NAME=mpris-ctl-leak
+
+memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory -fsanitize-blacklist=sanitize-blacklist.txt -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer
+memory:
+	$(MAKE) BIN_NAME=mpris-ctl-memory
+
+undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
+undefined:
+	$(MAKE) BIN_NAME=mpris-ctl-undef
+
+check_leak:
+	$(MAKE) leak run clean
+
+check_undefined:
+	$(MAKE) undefined run clean
+
 ifneq ($(CC),clang)
 check_memory:
 	$(error Only clang supports memory sanitizer check, current compiler "$(CC)")
@@ -36,34 +56,11 @@ check_memory:
 check: check_leak check_undefined
 else
 check_memory:
-	$(MAKE) memory clean
-
-check: check_leak check_undefined check_memory
+	$(MAKE) memory run clean
 endif
 
-leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
-leak:
-	$(MAKE) BIN_NAME=mpris-ctl-leak
-	$(MAKE) BIN_NAME=mpris-ctl-leak run
-
-memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory -fsanitize-blacklist=sanitize-blacklist.txt -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer
-memory:
-	$(MAKE) BIN_NAME=mpris-ctl-memory
-	$(MAKE) BIN_NAME=mpris-ctl-memory run
-
-undefined: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=undefined
-undefined:
-	$(MAKE) BIN_NAME=mpris-ctl-undef
-	$(MAKE) BIN_NAME=mpris-ctl-undef run
-
-check_leak:
-	$(MAKE) leak clean
-
-check_undefined:
-	$(MAKE) undefined clean
-
 run: $(BIN_NAME)
-	./$(BIN_NAME) info %full || test $$? -eq 1
+	./$(BIN_NAME) --player active --player inactive info %full || test $$? -eq 1
 
 release: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(RCOMPILE_FLAGS)
 release: export LDFLAGS := $(LDFLAGS) $(LINK_FLAGS) $(RLINK_FLAGS)
