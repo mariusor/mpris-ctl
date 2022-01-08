@@ -4,7 +4,9 @@
 
 #include <string.h>
 
-#define MAX_OUTPUT_LENGTH 1024
+#define MAX_OUTPUT_LENGTH 4096
+
+#define MAX(a, b) (a > b ? a : b)
 
 void str_replace(char* source, const char* search, const char* replace)
 {
@@ -58,12 +60,15 @@ void str_replace(char* source, const char* search, const char* replace)
             strncat(result, source + source_iterator, non_match_len);
         }
         source_iterator = match + se_len;
-        strncat(result, replace, MAX_OUTPUT_LENGTH - strlen(result) - 1);
+        strncat(result, replace, strlen(replace));
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
         size_t remaining_len = so_len - source_iterator;
         strncat(result, source + source_iterator, remaining_len);
     }
-    memcpy(source, result, MAX_OUTPUT_LENGTH - strlen(result) - 1);
+    memcpy(source, result, strlen(result));
+    for (int i = strlen(result); i < MAX_OUTPUT_LENGTH; i++) {
+        source[i] = 0;
+    }
 }
