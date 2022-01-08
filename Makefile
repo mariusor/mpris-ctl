@@ -29,8 +29,6 @@ endif
 
 all: debug
 
-check: check_leak check_undefined check_memory
-
 leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=address
 leak:
 	$(MAKE) BIN_NAME=mpris-ctl-leak
@@ -57,6 +55,7 @@ check: check_leak check_undefined
 else
 check_memory:
 	$(MAKE) memory run clean
+check: check_leak check_undefined check_memory
 endif
 
 run: $(BIN_NAME)
