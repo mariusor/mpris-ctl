@@ -65,5 +65,5 @@ void str_replace(char* source, const char* search, const char* replace)
         size_t remaining_len = so_len - source_iterator;
         strncat(result, source + source_iterator, remaining_len);
     }
-    memcpy(source, result, MAX_OUTPUT_LENGTH-1);
+    memcpy(source, result, MAX_OUTPUT_LENGTH - strlen(result) - 1);
 }
