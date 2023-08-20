@@ -107,7 +107,7 @@ ARG_PLAYER " <name,...>\tExecute command only for player(s) named <name,...>\n" 
 "\t%" INFO_FULL "\t\tprints all available information\n" \
 ""
 
-const char* get_version()
+const char* get_version(void)
 {
 #ifndef VERSION_HASH
 #define VERSION_HASH "(unknown)"
