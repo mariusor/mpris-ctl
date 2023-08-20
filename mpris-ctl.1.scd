@@ -16,16 +16,17 @@ mpris-ctl [OPTIONS...] [COMMAND] [format string]
 
 *--player* active | inactive | <name,...>
 
-	Specifies which players the command should be addressed to. The valid values are:
+	Specifies which player(s) the command should be addressed to. The valid values are:
 
 	*active*
 		all players that are currently in _Playing_ state.
 	*inactive*
-		all players that are currently in _Stopped_ or _Paused_ state.
+		all players that are currently in a _Stopped_ or _Paused_ state.
 	<name...>
 		specific player names, separated by spaces.
 
-If the option is absent we consider all the players, active and inactive.
+To consider all players both active and inactive you must pass the the option
+twice, once for each state: --player active --player inactive
 
 # COMMANDS
 
