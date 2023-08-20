@@ -263,7 +263,8 @@ int main(int argc, char** argv)
                     ) {
                         break;
                     }
-                    memcpy(player_names[player_count++], optarg, MAX_OUTPUT_LENGTH - 1);
+                    int len = strlen(optarg);
+                    memcpy(player_names[player_count++], optarg, MIN(MAX_OUTPUT_LENGTH - 1, len));
                 }
                 if (invalid_player_type) {
                     fprintf(stderr, "Invalid player value '%s'\n", optarg);
