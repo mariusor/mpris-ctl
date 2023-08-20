@@ -5,9 +5,19 @@ packages:
   - dbus
 sources:
   - https://git.sr.ht/~mariusor/mpris-ctl
+secrets:
+  - 3dcea276-38d6-4a7e-85e5-20cbc903e1ea
 tasks:
   - build: |
+      test ${BUILD_SUBMITTER} != "git.sr.ht" && complete-build
       cd mpris-ctl
       make check
       ## this needs libdbus and glibc to be built with the memory sanitizer, which is out of scope for the moment
       make CC=clang check
+  - push_to_github: |
+      set -a +x
+      ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      cd mpris-ctl
+      git remote add hub git@github.com:mariusor/mpris-ctl
+      git push hub --force --all
