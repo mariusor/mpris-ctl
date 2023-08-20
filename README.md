@@ -27,7 +27,7 @@ $ make
 An example of configuration for i3/sway:
 
 ```
-bindsym XF86AudioPlay exec "mpris-ctl pp"
+bindsym XF86AudioPlay exec "mpris-ctl --player active --player inactive pp"
 bindsym XF86AudioStop exec "mpris-ctl --player active stop"
 bindsym XF86AudioNext exec "mpris-ctl --player active next"
 bindsym XF86AudioPrev exec "mpris-ctl --player active prev"
