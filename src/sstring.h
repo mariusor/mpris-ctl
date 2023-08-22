@@ -3,6 +3,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #define MAX_OUTPUT_LENGTH 4096
 

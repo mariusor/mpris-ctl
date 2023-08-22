@@ -51,6 +51,14 @@ twice, once for each state: --player active --player inactive
 *prev*
 	Change to the previous track in the play-list
 
+*seek* [time[unit]]
+	Seek forwards in the track for given time. The time value can be a floating
+	point number as understood by the current locale.
+
+	The unit can be one of:  _s_: seconds (default), _ms_: milliseconds, _m_: minutes
+
+	The default is 5 seconds.
+
 *status*
 	Get the playback status. Equivalent to the *info %play\_status* action
 

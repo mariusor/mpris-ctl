@@ -15,6 +15,7 @@
 #define MPRIS_METHOD_PAUSE         "Pause"
 #define MPRIS_METHOD_STOP          "Stop"
 #define MPRIS_METHOD_PLAY_PAUSE    "PlayPause"
+#define MPRIS_METHOD_SEEK          "Seek"
 
 #define MPRIS_PNAME_PLAYBACKSTATUS "PlaybackStatus"
 #define MPRIS_PNAME_CANCONTROL     "CanControl"
@@ -553,6 +554,52 @@ _unref_message_err:
         dbus_message_unref(msg);
     }
     return;
+}
+
+int seek(DBusConnection* conn, mpris_player player, int ms)
+{
+    if (NULL == conn) { return 0; }
+    int status = 0;
+
+    DBusMessage* msg;
+    DBusPendingCall* pending;
+    DBusMessageIter args;
+
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
+    if (NULL == msg) { return status; }
+
+    int64_t usec = ms * 1000;
+    dbus_message_iter_init_append(msg, &args);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_INT64, &usec)) {
+         goto _unref_message_err;
+    }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) ||
+        NULL == pending) {
+        goto _unref_message_err;
+    }
+    dbus_connection_flush(conn);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply = NULL;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) { goto _unref_pending_err; }
+
+    dbus_message_unref(reply);
+
+_unref_pending_err:
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+_unref_message_err:
+    // free message
+    dbus_message_unref(msg);
+
+    return status;
 }
 
 int load_players(DBusConnection* conn, mpris_player *players)

@@ -21,6 +21,8 @@
 #define CMD_PREVIOUS    "prev"
 #define CMD_PLAY_PAUSE  "pp"
 #define CMD_STATUS      "status"
+#define CMD_SEEK        "seek"
+
 #define CMD_LIST        "list"
 #define CMD_INFO        "info"
 #define ARG_PLAYER      "--player"
@@ -78,13 +80,19 @@ ARG_PLAYER " <name,...>\tExecute command only for player(s) named <name,...>\n" 
 "\n" \
 "Commands:\n"\
 "\t" CMD_HELP "\t\tThis help message\n" \
+"\n" \
 "\t" CMD_PLAY "\t\tBegin playing\n" \
 "\t" CMD_PLAY_PAUSE "\t\tToggle play or pause\n" \
 "\t" CMD_PAUSE "\t\tPause the player\n" \
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
-"\t" CMD_INFO "\t\t<format> Display information about the current track - default format is '%s'\n" \
+"\t" CMD_SEEK "\t\t[time[ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
+"\t\t\tThe time can be a float value, if absent it defaults to 10 seconds.\n" \
+"\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
+"\n" \
+"\t" CMD_INFO "\t\t<format> Display information about the current track.\n" \
+"\t\t\tThe default format is '%s'\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
 "\n" \
@@ -153,6 +161,9 @@ const char* get_dbus_method (char* command)
     if (strcmp(command, CMD_PLAY_PAUSE) == 0) {
         return MPRIS_METHOD_PLAY_PAUSE;
     }
+    if (strcmp(command, CMD_SEEK) == 0) {
+        return MPRIS_METHOD_SEEK;
+    }
     if (strcmp(command, CMD_STATUS) == 0 || strcmp(command, CMD_INFO) == 0 || strcmp(command, CMD_LIST) == 0) {
         return DBUS_PROPERTIES_INTERFACE;
     }
@@ -212,6 +223,37 @@ void print_mpris_info(mpris_properties *props, const char* format)
     fprintf(stdout, "%s\n", output);
 }
 
+#define DEFAULT_SKEEP_MSEC       5*1000 // 5 seconds
+
+#define TIME_SUFFIX_SEC          "s"
+#define TIME_SUFFIX_MIN          "m"
+#define TIME_SUFFIX_MSEC         "ms"
+
+int parse_time_argument(char *time_string)
+{
+    int ms = DEFAULT_SKEEP_MSEC;
+    if (NULL == time_string) { return ms; }
+
+    float time_units = -1.0;
+    char suffix[10] = {0};
+
+    int loaded = sscanf(time_string, "%f%s", &time_units, (char*)&suffix);
+    if (loaded == 0 || loaded == EOF) return ms;
+    if (loaded == 1) suffix[0] = 's';
+
+    if (strncmp(suffix, TIME_SUFFIX_SEC, 1) == 0) {
+        ms = time_units * 1000;
+    }
+    if (strncmp(suffix, TIME_SUFFIX_MIN, 1) == 0) {
+        ms = time_units * 60 * 1000;
+    }
+    if (strncmp(suffix, TIME_SUFFIX_MSEC, 2) == 0) {
+        ms = time_units;
+    }
+
+    return ms;
+}
+
 int main(int argc, char** argv)
 {
     int status = EXIT_FAILURE;
@@ -225,6 +267,7 @@ int main(int argc, char** argv)
     bool inactive_players = false;
     char player_names[MAX_PLAYERS][MAX_OUTPUT_LENGTH] = {0};
     int player_count = 0;
+    int ms = DEFAULT_SKEEP_MSEC;
 
     int option_index = 0;
     static struct option long_options[] = {
@@ -288,6 +331,11 @@ int main(int argc, char** argv)
         command = argv[optind];
         if (strncmp(command, CMD_HELP, strlen(CMD_HELP)) == 0) {
             show_help = true;
+        }
+        if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
+            if (optind <= argc) {
+                ms = parse_time_argument(argv[optind+1]);
+            }
         }
         if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && argc > optind+1) {
             info_format = argv[optind+1];
@@ -361,8 +409,11 @@ int main(int argc, char** argv)
         }
         const char *dbus_property = (char*)get_dbus_property_name(command);
         if (NULL == dbus_property) {
-            call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH,
-                             MPRIS_PLAYER_INTERFACE, dbus_method);
+            if (strncmp(command, CMD_SEEK, 4) == 0) {
+                seek (conn, player, ms);
+            } else {
+                call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, dbus_method);
+            }
         } else {
             print_mpris_info(&player.properties, info_format);
         }
