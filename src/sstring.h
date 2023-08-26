@@ -9,6 +9,7 @@
 
 #define MAX(a, b) (a >= b ? a : b)
 #define MIN(a, b) (a <= b ? a : b)
+#define array_size(a) (NULL == a ? 0 : (sizeof(a) / sizeof((a)[0])))
 
 void str_replace(char* source, const char* search, const char* replace)
 {

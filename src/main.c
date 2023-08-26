@@ -254,6 +254,22 @@ int parse_time_argument(char *time_string)
     return ms;
 }
 
+bool is_command(const char *param)
+{
+    if (NULL == param) return false;
+
+    const char commands[11][7] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT,
+        CMD_PREVIOUS, CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO};
+
+    for (int i = 0; i <= (int)array_size(commands); i++) {
+        const char *cmd = commands[i];
+        if (strncmp(param, cmd, strlen(cmd)) == 0) {
+                return true;
+        }
+    }
+    return false;
+}
+
 int main(int argc, char** argv)
 {
     int status = EXIT_FAILURE;
@@ -268,6 +284,33 @@ int main(int argc, char** argv)
     char player_names[MAX_PLAYERS][MAX_OUTPUT_LENGTH] = {0};
     int player_count = 0;
     int ms = DEFAULT_SKEEP_MSEC;
+    char **params = malloc(sizeof(char*)*(argc+1));
+    int param_count = 0;
+
+    char *info_format = INFO_DEFAULT_STATUS;
+    char *command = NULL;
+    for (int i = 1; i < argc; i++) {
+        if (is_command(argv[i])) {
+            command = argv[i];
+            if (strncmp(command, CMD_HELP, strlen(CMD_HELP)) == 0) {
+                show_help = true;
+            } else if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
+                if (i <= argc) {
+                    i++;
+                    ms = parse_time_argument(argv[i]);
+                }
+            } else if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && argc > i+1) {
+                info_format = argv[i+1];
+            } else if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
+                info_format = INFO_PLAYBACK_STATUS;
+            } else if (strncmp(command, CMD_LIST, strlen(CMD_LIST)) == 0) {
+                info_format = INFO_PLAYER_NAME;
+            }
+        } else {
+            params[param_count] = argv[i];
+            param_count++;
+        }
+    }
 
     int option_index = 0;
     static struct option long_options[] = {
@@ -275,9 +318,10 @@ int main(int argc, char** argv)
         {"help", no_argument, 0, 2},
         {0, 0, 0, 0},
     };
+
     bool invalid_player_type = false;
     while (true) {
-        int char_arg = getopt_long(argc, argv, "", long_options, &option_index);
+        int char_arg = getopt_long(param_count, params, "", long_options, &option_index);
         if (char_arg == -1) { break; }
         switch (char_arg) {
             case 1:
@@ -325,28 +369,7 @@ int main(int argc, char** argv)
         active_players = true;
         inactive_players = false;
     }
-    char *info_format = INFO_DEFAULT_STATUS;
-    char *command = NULL;
-    if (optind < argc) {
-        command = argv[optind];
-        if (strncmp(command, CMD_HELP, strlen(CMD_HELP)) == 0) {
-            show_help = true;
-        }
-        if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
-            if (optind <= argc) {
-                ms = parse_time_argument(argv[optind+1]);
-            }
-        }
-        if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && argc > optind+1) {
-            info_format = argv[optind+1];
-        }
-        if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
-            info_format = INFO_PLAYBACK_STATUS;
-        }
-        if (strncmp(command, CMD_LIST, strlen(CMD_LIST)) == 0) {
-            info_format = INFO_PLAYER_NAME;
-        }
-    }
+
     if (show_help) {
         // TODO(marius): add help subjects for each command
         goto _help;
