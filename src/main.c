@@ -71,12 +71,12 @@
 #define PLAYER_INACTIVE  "inactive"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s [" ARG_PLAYER " <name,...> | " PLAYER_ACTIVE " | " PLAYER_INACTIVE "] COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " " PLAYER_ACTIVE " | " PLAYER_INACTIVE " | <name ...>] COMMAND - Control running MPRIS player\n" \
 "\n" \
 "Options:\n" \
-ARG_PLAYER " <name,...>\tExecute command only for player(s) named <name,...>\n" \
-"         "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (default)\n" \
+ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (default)\n" \
 "         "PLAYER_INACTIVE"\tExecute command only for the inactive player(s)\n" \
+"         <name ...>\tExecute command only for player(s) named <name ...>\n" \
 "\n" \
 "Commands:\n"\
 "\t" CMD_HELP "\t\tThis help message\n" \
