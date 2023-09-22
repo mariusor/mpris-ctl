@@ -123,48 +123,73 @@ const char* get_version(void)
     return VERSION_HASH;
 }
 
-const char* get_dbus_property_name (char* command)
+enum cmd {
+    c_help,
+    c_play,
+    c_pause,
+    c_stop,
+    c_next,
+    c_previous,
+    c_play_pause,
+    c_status,
+    c_seek,
+    c_list,
+    c_info,
+    c_count
+};
+
+struct ctl {
+    int status;
+    enum cmd command;
+
+    bool show_active_players;
+    bool show_inactive_players;
+
+    char player_names[MAX_PLAYERS][MAX_OUTPUT_LENGTH];
+    mpris_player players[MAX_PLAYERS];
+    int player_count;
+
+};
+
+const char* get_dbus_property_name (enum cmd command)
 {
-    if (NULL == command) return NULL;
-    if (strcmp(command, CMD_STATUS) == 0) {
+    if (command == c_status) {
         return MPRIS_PROP_PLAYBACK_STATUS;
     }
-    if (strcmp(command, CMD_INFO) == 0) {
+    if (command == c_info) {
         return MPRIS_PROP_METADATA;
     }
-    if (strcmp(command, CMD_LIST) == 0) {
+    if (command == c_list) {
         return INFO_PLAYER_NAME;
     }
 
     return NULL;
 }
 
-const char* get_dbus_method (char* command)
+const char* get_dbus_method (enum cmd command)
 {
-    if (NULL == command) return NULL;
-
-    if (strcmp(command, CMD_PLAY) == 0) {
+    if (command == c_play) {
         return MPRIS_METHOD_PLAY;
     }
-    if (strcmp(command,CMD_PAUSE) == 0) {
+    if (command == c_pause) {
         return MPRIS_METHOD_PAUSE;
     }
-    if (strcmp(command, CMD_STOP) == 0) {
+    if (command == c_stop) {
         return MPRIS_METHOD_STOP;
     }
-    if (strcmp(command, CMD_NEXT) == 0) {
+    if (command == c_next) {
         return MPRIS_METHOD_NEXT;
     }
-    if (strcmp(command, CMD_PREVIOUS) == 0) {
+    if (command == c_previous) {
         return MPRIS_METHOD_PREVIOUS;
     }
-    if (strcmp(command, CMD_PLAY_PAUSE) == 0) {
+    if (command == c_play_pause) {
         return MPRIS_METHOD_PLAY_PAUSE;
     }
-    if (strcmp(command, CMD_SEEK) == 0) {
+    if (command == c_seek) {
         return MPRIS_METHOD_SEEK;
     }
-    if (strcmp(command, CMD_STATUS) == 0 || strcmp(command, CMD_INFO) == 0 || strcmp(command, CMD_LIST) == 0) {
+    if (command == c_status || command == c_info || command == c_list) {
         return DBUS_PROPERTIES_INTERFACE;
     }
 
@@ -254,7 +279,7 @@ int parse_time_argument(char *time_string)
     return ms;
 }
 
-bool is_command(const char *param)
+bool arg_is_command(const char *param)
 {
     if (NULL == param) return false;
 
@@ -270,19 +295,101 @@ bool is_command(const char *param)
     return false;
 }
 
+
+void load_players(struct ctl *cmd, DBusConnection *conn, char **params, int param_count)
+{
+    int option_index = 0;
+    static struct option long_options[] = {
+        {"player", required_argument, 0, 1},
+        {"help", no_argument, 0, 2},
+        {0},
+    };
+
+    int player_names_count = 0;
+    while (true) {
+        int char_arg = getopt_long(param_count, params, "", long_options, &option_index);
+        if (char_arg == -1) { break; }
+        switch (char_arg) {
+            case 1:
+                if (strncmp(optarg, PLAYER_ACTIVE, strlen(PLAYER_ACTIVE)) == 0) {
+                    cmd->show_active_players = true;
+                    continue;
+                }
+                if (strncmp(optarg, PLAYER_INACTIVE, strlen(PLAYER_INACTIVE)) == 0) {
+                    cmd->show_inactive_players = true;
+                    continue;
+                }
+                optind--;
+                for( ;optind < param_count && *params[optind] != '-'; optind++){
+                    optarg = params[optind];
+                    int len = strlen(optarg);
+                    memcpy(cmd->player_names[player_names_count++], optarg, MIN(MAX_OUTPUT_LENGTH - 1, len));
+                }
+                break;
+            case 2:
+                // TODO(marius): I should make it that the --help argument shows the current command's help
+                // Currently we just show full help.
+                cmd->command = c_help;
+                break;
+            default:
+                break;
+        }
+    }
+    if (!cmd->show_active_players && !cmd->show_inactive_players && player_names_count == 0) {
+        cmd->show_active_players = false;
+        cmd->show_inactive_players = false;
+    }
+
+    cmd->player_count = load_mpris_players(conn, cmd->players);
+    for (int i = 0; i < cmd->player_count; i++) {
+        mpris_player player = cmd->players[i];
+        load_mpris_properties(conn, player.namespace, &player.properties);
+
+        bool skip = true;
+        if (cmd->show_active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
+            skip = false;
+        }
+
+        if (cmd->show_inactive_players &&
+            (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
+            strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
+            skip = false;
+        }
+
+        for (int i = 0; i < player_names_count; i++) {
+            char *player_name = cmd->player_names[i];
+            if (NULL != player_name) {
+                size_t name_len = strlen(player_name);
+                size_t prop_name_len = strlen(player.properties.player_name);
+                size_t prop_ns_len = strlen(player.namespace);
+                if (prop_name_len < name_len) {
+                    prop_name_len = name_len ;
+                }
+                if (prop_ns_len < name_len) {
+                    prop_ns_len = name_len;
+                }
+                if (strncmp(player.properties.player_name, player_name, prop_name_len) == 0 ||
+                   strncmp(player.namespace, player_name, prop_ns_len) == 0) {
+                    skip = false;
+                }
+            }
+        }
+        if (skip) {
+            memset(&player, 0, sizeof(struct mpris_player));
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
-    int status = EXIT_FAILURE;
+    struct ctl cmd = {0};
+    cmd.status = EXIT_FAILURE;
 
     char* name = argv[0];
     if (argc == 0) {
+        cmd.command = c_help;
         goto _help;
     }
-    bool show_help = false;
-    bool active_players = false;
-    bool inactive_players = false;
-    char player_names[MAX_PLAYERS][MAX_OUTPUT_LENGTH] = {0};
-    int player_count = 0;
     int ms = DEFAULT_SKEEP_MSEC;
     char **params = calloc(argc+1, sizeof(char*));
     int param_count = 0;
@@ -297,79 +404,34 @@ int main(int argc, char** argv)
      * MPRIS namespaces, or player names, together with the "active"/"inactive" special values.
      */
     char *info_format = NULL;
-    char *command = CMD_HELP;
     for (int i = 1; i < argc; i++) {
-        if (is_command(argv[i])) {
-            command = argv[i];
+        if (arg_is_command(argv[i])) {
+            char *command = argv[i];
             if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
+                cmd.command = c_seek;
                 if (i <= argc) {
                     ms = parse_time_argument(argv[++i]);
                 }
             } else if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && argc > i+1) {
+                cmd.command = c_info;
                 if (*argv[i+1] != '-') info_format = argv[++i];
             } else if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
+                cmd.command = c_status;
                 info_format = INFO_PLAYBACK_STATUS;
             } else if (strncmp(command, CMD_LIST, strlen(CMD_LIST)) == 0) {
+                cmd.command = c_list;
                 info_format = INFO_PLAYER_NAME;
             }
         } else {
             params[param_count++] = argv[i];
         }
     }
-    if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0 && NULL == info_format) {
+    if (cmd.command == c_info && NULL == info_format) {
         info_format = INFO_DEFAULT_STATUS;
     }
-    if (strncmp(command, CMD_HELP, strlen(CMD_HELP)) == 0) {
-        show_help = true;
-    }
 
-    int option_index = 0;
-    static struct option long_options[] = {
-        {"player", required_argument, 0, 1},
-        {"help", no_argument, 0, 2},
-        {0},
-    };
-
-    while (true) {
-        int char_arg = getopt_long(param_count, params, "", long_options, &option_index);
-        if (char_arg == -1) { break; }
-        switch (char_arg) {
-            case 1:
-                if (strncmp(optarg, PLAYER_ACTIVE, strlen(PLAYER_ACTIVE)) == 0) {
-                    active_players = true;
-                    continue;
-                }
-                if (strncmp(optarg, PLAYER_INACTIVE, strlen(PLAYER_INACTIVE)) == 0) {
-                    inactive_players = true;
-                    continue;
-                }
-                optind--;
-                for( ;optind < param_count && *params[optind] != '-'; optind++){
-                    optarg = params[optind];
-                    int len = strlen(optarg);
-                    memcpy(player_names[player_count++], optarg, MIN(MAX_OUTPUT_LENGTH - 1, len));
-                }
-                break;
-            case 2:
-                show_help = true;
-                break;
-            default:
-                break;
-        }
-    }
-    if (!active_players && !inactive_players && player_count == 0) {
-        active_players = true;
-        inactive_players = false;
-    }
-
-    if (show_help) {
+    if (cmd.command == c_help) {
         goto _help;
-    }
-
-    char *dbus_method = (char*)get_dbus_method(command);
-    if (NULL == dbus_method) {
-        //fprintf(stderr, "Invalid command %s (use help for help)\n", command);
-        goto _exit;
     }
 
     // initialise the errors
@@ -385,23 +447,32 @@ int main(int argc, char** argv)
     if (NULL == conn) {
         goto _exit;
     }
+    load_players(&cmd, conn, params, param_count);
 
-    mpris_player players[MAX_PLAYERS] = {0};
-    int found = load_players(conn, players);
-    for (int i = 0; i < found; i++) {
-        mpris_player player = players[i];
+    char *dbus_method = (char*)get_dbus_method(cmd.command);
+    if (NULL == dbus_method) {
+        //fprintf(stderr, "Invalid command %s (use help for help)\n", command);
+        goto _exit;
+    }
+    if (cmd.player_count == 0) {
+        fprintf(stderr, "No players found\n");
+        goto _exit;
+    }
+
+    for (int i = 0; i < cmd.player_count; i++) {
+        mpris_player player = cmd.players[i];
         load_mpris_properties(conn, player.namespace, &player.properties);
         bool skip = true;
-        if (active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
+        if (cmd.show_active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
             skip = false;
         }
-        if (inactive_players &&
+        if (cmd.show_inactive_players &&
             (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
             strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
             skip = false;
         }
-        for (int i = 0; i < player_count; i++) {
-            char *player_name = player_names[i];
+        for (int i = 0; i < cmd.player_count; i++) {
+            char *player_name = cmd.players[i].name;
             if (NULL != player_name) {
                 size_t name_len = strlen(player_name);
                 size_t prop_name_len = strlen(player.properties.player_name);
@@ -421,9 +492,9 @@ int main(int argc, char** argv)
         if (skip) {
             continue;
         }
-        const char *dbus_property = (char*)get_dbus_property_name(command);
+        const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
         if (NULL == dbus_property) {
-            if (strncmp(command, CMD_SEEK, 4) == 0) {
+            if (cmd.command == c_seek) {
                 seek (conn, player, ms);
             } else {
                 call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, dbus_method);
@@ -432,16 +503,16 @@ int main(int argc, char** argv)
             print_mpris_info(&player.properties, info_format);
         }
     }
-    status = EXIT_SUCCESS;
+    cmd.status = EXIT_SUCCESS;
 
     if (NULL != conn) {
         dbus_connection_close(conn);
         dbus_connection_unref(conn);
     }
 _exit:
-    return status;
+    return cmd.status;
 _help:
-        print_help(name);
-        goto _exit;
+    print_help(name);
+    goto _exit;
 }
 

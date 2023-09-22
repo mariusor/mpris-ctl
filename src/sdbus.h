@@ -602,7 +602,7 @@ _unref_message_err:
     return status;
 }
 
-int load_players(DBusConnection* conn, mpris_player *players)
+int load_mpris_players(DBusConnection* conn, mpris_player *players)
 {
     if (NULL == conn) { return 0; }
     if (NULL == players) { return 0; }
