@@ -410,8 +410,9 @@ int main(int argc, char** argv)
                 }
             } else if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0) {
                 cmd.command = c_info;
-                if (i <= argc) {
-                    info_format = argv[++i];
+                if (i <= argc && memcmp(argv[i+1], "--", 2) != 0) {
+                    info_format = argv[i+1];
+                    i++;
                 }
             } else if (strncmp(command, CMD_STATUS, strlen(CMD_STATUS)) == 0) {
                 cmd.command = c_status;
