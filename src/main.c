@@ -406,12 +406,12 @@ int main(int argc, char** argv)
             char *command = argv[i];
             if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
                 cmd.command = c_seek;
-                if (i <= argc) {
+                if (i+1 < argc) {
                     ms = parse_time_argument(argv[++i]);
                 }
             } else if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0) {
                 cmd.command = c_info;
-                if (i <= argc && memcmp(argv[i+1], "--", 2) != 0) {
+                if (i+1 < argc && argv[i+1][0] != '-' && argv[i+1][1] != '-') {
                     info_format = argv[i+1];
                     i++;
                 }
