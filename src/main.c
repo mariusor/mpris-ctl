@@ -295,19 +295,18 @@ bool arg_is_command(const char *param)
     return false;
 }
 
-
-void load_players(struct ctl *cmd, DBusConnection *conn, char **params, int param_count)
+void load_players(struct ctl *cmd, DBusConnection *conn, char *params[], int param_count)
 {
-    int option_index = 0;
     static struct option long_options[] = {
-        {"player", required_argument, 0, 1},
-        {"help", no_argument, 0, 2},
+        {"player", required_argument, NULL, 1},
+        {"help", no_argument, NULL, 2},
         {0},
     };
 
     int player_names_count = 0;
+    opterr = 0; // Skip errors
     while (true) {
-        int char_arg = getopt_long(param_count, params, "", long_options, &option_index);
+        int char_arg = getopt_long(param_count, params, "", long_options, NULL);
         if (char_arg == -1) { break; }
         switch (char_arg) {
             case 1:
@@ -335,6 +334,7 @@ void load_players(struct ctl *cmd, DBusConnection *conn, char **params, int para
                 break;
         }
     }
+
     if (!cmd->show_active_players && !cmd->show_inactive_players && player_names_count == 0) {
         cmd->show_active_players = false;
         cmd->show_inactive_players = false;
@@ -342,40 +342,37 @@ void load_players(struct ctl *cmd, DBusConnection *conn, char **params, int para
 
     cmd->player_count = load_mpris_players(conn, cmd->players);
     for (int i = 0; i < cmd->player_count; i++) {
-        mpris_player player = cmd->players[i];
-        load_mpris_properties(conn, player.namespace, &player.properties);
+        mpris_player *player = &cmd->players[i];
+        load_mpris_properties(conn, player->namespace, &player->properties);
 
-        bool skip = true;
-        if (cmd->show_active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
-            skip = false;
+        player->skip = true;
+        if (cmd->show_active_players && (strncmp(player->properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
+            player->skip = false;
         }
 
         if (cmd->show_inactive_players &&
-            (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
-            strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
-            skip = false;
+            (strncmp(player->properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
+            strncmp(player->properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
+            player->skip = false;
         }
 
         for (int i = 0; i < player_names_count; i++) {
             char *player_name = cmd->player_names[i];
             if (NULL != player_name) {
                 size_t name_len = strlen(player_name);
-                size_t prop_name_len = strlen(player.properties.player_name);
-                size_t prop_ns_len = strlen(player.namespace);
+                size_t prop_name_len = strlen(player->properties.player_name);
+                size_t prop_ns_len = strlen(player->namespace);
                 if (prop_name_len < name_len) {
                     prop_name_len = name_len ;
                 }
                 if (prop_ns_len < name_len) {
                     prop_ns_len = name_len;
                 }
-                if (strncmp(player.properties.player_name, player_name, prop_name_len) == 0 ||
-                   strncmp(player.namespace, player_name, prop_ns_len) == 0) {
-                    skip = false;
+                if (strncmp(player->properties.player_name, player_name, prop_name_len) == 0 ||
+                   strncmp(player->namespace, player_name, prop_ns_len) == 0) {
+                    player->skip = false;
                 }
             }
-        }
-        if (skip) {
-            memset(&player, 0, sizeof(struct mpris_player));
         }
     }
 }
@@ -447,7 +444,7 @@ int main(int argc, char** argv)
     if (NULL == conn) {
         goto _exit;
     }
-    load_players(&cmd, conn, params, param_count);
+    load_players(&cmd, conn, argv, argc);
 
     char *dbus_method = (char*)get_dbus_method(cmd.command);
     if (NULL == dbus_method) {
@@ -461,37 +458,8 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < cmd.player_count; i++) {
         mpris_player player = cmd.players[i];
-        load_mpris_properties(conn, player.namespace, &player.properties);
-        bool skip = true;
-        if (cmd.show_active_players && (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
-            skip = false;
-        }
-        if (cmd.show_inactive_players &&
-            (strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_PAUSED, 7) == 0 ||
-            strncmp(player.properties.playback_status, MPRIS_METADATA_VALUE_STOPPED, 8) == 0)) {
-            skip = false;
-        }
-        for (int i = 0; i < cmd.player_count; i++) {
-            char *player_name = cmd.players[i].name;
-            if (NULL != player_name) {
-                size_t name_len = strlen(player_name);
-                size_t prop_name_len = strlen(player.properties.player_name);
-                size_t prop_ns_len = strlen(player.namespace);
-                if (prop_name_len < name_len) {
-                    prop_name_len = name_len ;
-                }
-                if (prop_ns_len < name_len) {
-                    prop_ns_len = name_len;
-                }
-                if (strncmp(player.properties.player_name, player_name, prop_name_len) == 0 ||
-                   strncmp(player.namespace, player_name, prop_ns_len) == 0) {
-                    skip = false;
-                }
-            }
-        }
-        if (skip) {
-            continue;
-        }
+        if (player.skip) continue;
+
         const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
         if (NULL == dbus_property) {
             if (cmd.command == c_seek) {

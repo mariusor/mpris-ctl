@@ -104,7 +104,7 @@ typedef struct mpris_player {
     char *name;
     char namespace[MAX_OUTPUT_LENGTH];
     mpris_properties properties;
-    bool active;
+    bool skip;
 } mpris_player;
 
 void mpris_metadata_init(mpris_metadata* metadata)
