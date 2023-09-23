@@ -1,5 +1,5 @@
 # mpris-ctl 
-[![MIT Licensed](https://img.shields.io/github/license/mariusor/mpris-ctl.svg)](https://raw.githubusercontent.com/mariusor/mpris-ctl/master/LICENSE)
+[![MIT Licensed](https://img.shields.io/github/license/mariusor/mpris-ctl.svg)](https://git.sr.ht/~mariusor/mpris-ctl/blob/master/LICENSE)
 [![Build status](https://builds.sr.ht/~mariusor/mpris-ctl.svg)](https://builds.sr.ht/~mariusor/mpris-ctl)
 [![AUR package](https://img.shields.io/aur/version/mpris-ctl.svg)](https://aur.archlinux.org/packages/mpris-ctl/)
 [![Coverity Scan status](https://img.shields.io/coverity/scan/12309.svg)](https://scan.coverity.com/projects/12309)
@@ -16,9 +16,9 @@ To build from source just clone the repository and run make.
 By default the binary is installed in **/usr/local/bin**, but you can provide your own DESTDIR and INSTALL_PREFIX.
 
 ```sh
-$ git clone https://github.com/mariusor/mpris-ctl.git
+$ git clone https://git.sr.ht/~mariusor/mpris-ctl
 $ cd mpris-ctl
-$ make 
+$ make release
 # make install
 ```
 
