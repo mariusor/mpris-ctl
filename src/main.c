@@ -71,7 +71,7 @@
 #define PLAYER_INACTIVE  "inactive"
 
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
-"Usage:\n  %s [" ARG_PLAYER " " PLAYER_ACTIVE " | " PLAYER_INACTIVE " | <name ...>] COMMAND - Control running MPRIS player\n" \
+"Usage:\n  %s [" ARG_PLAYER " " PLAYER_ACTIVE " | " PLAYER_INACTIVE " | <name ...>] [COMMAND] - Control running MPRIS player\n" \
 "\n" \
 "Options:\n" \
 ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (default)\n" \
@@ -87,8 +87,9 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
-"\t" CMD_SEEK "\t\t[time[ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
-"\t\t\tThe time can be a float value, if absent it defaults to 10 seconds.\n" \
+"\t" CMD_SEEK "\t\t[-][time][ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
+"\t\t\tThe time can be a float value, if absent it defaults to 5 seconds.\n" \
+"\t\t\tThe time can be a negative value, which seeks backwards.\n" \
 "\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
 "\n" \
 "\t" CMD_INFO "\t\t<format> Display information about the current track.\n" \

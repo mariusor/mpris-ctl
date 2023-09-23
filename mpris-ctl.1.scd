@@ -6,7 +6,7 @@ MPRIS-CTL(1)
 
 # SYNOPSIS
 
-mpris-ctl [OPTIONS...] [COMMAND] [format string]
+mpris-ctl [OPTIONS...] [COMMAND]
 
 # DESCRIPTION
 
@@ -22,16 +22,13 @@ mpris-ctl [OPTIONS...] [COMMAND] [format string]
 		all players that are currently in _Playing_ state.
 	*inactive*
 		all players that are currently in a _Stopped_ or _Paused_ state.
-	<name ...>
+	*<name ...>*
 		specific player names, separated by spaces.
 
 To consider all players both active and inactive you must pass the the option
-twice, once for each state: --player active --player inactive
+twice, once for each state: *--player active --player inactive*
 
 # COMMANDS
-
-*help*
-	This help message
 
 *play*
 	Begin playing
@@ -51,11 +48,13 @@ twice, once for each state: --player active --player inactive
 *prev*
 	Change to the previous track in the play-list
 
-*seek* [time[unit]]
+*seek* [-][time][unit]
 	Seek forwards in the track for given time. The time value can be a floating
 	point number as understood by the current locale.
 
 	The unit can be one of:  _s_: seconds (default), _ms_: milliseconds, _m_: minutes
+
+	A negative value seeks backwards.
 
 	The default is 5 seconds.
 
@@ -71,10 +70,10 @@ twice, once for each state: --player active --player inactive
 # FORMAT SPECIFIERS
 
 *%player\_name*
-	prints the media-player's name
+	prints the name of the media-player
 
 *%track\_name*
-	prints the track's name
+	prints the track name
 
 *%track\_number*
 	prints the track number
@@ -83,13 +82,13 @@ twice, once for each state: --player active --player inactive
 	prints the track length in seconds
 
 *%artist\_name*
-	prints the artist's name
+	prints the artist name
 
 *%album\_name*
-	prints the album's name
+	prints the album name
 
 *%album\_artist*
-	prints the album's artist
+	prints the album artist
 
 *%art\_url*
 	prints the URL of the cover art image
@@ -107,13 +106,13 @@ twice, once for each state: --player active --player inactive
 	prints the loop status
 
 *%position*
-	prints the track's position in seconds
+	prints the position, in seconds, in the current track
 
 *%bitrate*
-	prints the track's bit-rate
+	prints the track bit-rate
 
 *%comment*
-	prints the track's comment
+	prints the track comment
 
 *%full*
 	prints all available information
