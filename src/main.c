@@ -472,7 +472,10 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < cmd.player_count; i++) {
         mpris_player player = cmd.players[i];
-        if (player.skip) continue;
+        if (player.skip) {
+            if (cmd.player_names[0][0] != 0) continue;
+            if (cmd.command != c_play) continue;
+        }
 
         const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
         if (NULL == dbus_property) {
