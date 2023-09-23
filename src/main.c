@@ -336,7 +336,7 @@ void load_players(struct ctl *cmd, DBusConnection *conn, char *params[], int par
 
     if (!active_players && !inactive_players && player_names_count == 0) {
         active_players = true;
-        inactive_players = true;
+        inactive_players = false;
     }
 
     cmd->player_count = load_mpris_players(conn, cmd->players);
