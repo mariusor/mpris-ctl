@@ -419,6 +419,18 @@ int main(int argc, char** argv)
             } else if (strncmp(command, CMD_LIST, strlen(CMD_LIST)) == 0) {
                 cmd.command = c_list;
                 info_format = INFO_PLAYER_NAME;
+            } else if (strncmp(command, CMD_PLAY_PAUSE, strlen(CMD_PLAY_PAUSE)) == 0) {
+                cmd.command = c_play_pause;
+            } else if (strncmp(command, CMD_PLAY, strlen(CMD_PLAY)) == 0) {
+                cmd.command = c_play;
+            } else if (strncmp(command, CMD_PAUSE, strlen(CMD_PAUSE)) == 0) {
+                cmd.command = c_pause;
+            } else if (strncmp(command, CMD_PREVIOUS, strlen(CMD_PREVIOUS)) == 0) {
+                cmd.command = c_previous;
+            } else if (strncmp(command, CMD_NEXT, strlen(CMD_NEXT)) == 0) {
+                cmd.command = c_next;
+            } else if (strncmp(command, CMD_STOP, strlen(CMD_STOP)) == 0) {
+                cmd.command = c_stop;
             }
         } else {
             params[param_count++] = argv[i];
