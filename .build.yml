@@ -20,4 +20,4 @@ tasks:
 
       cd mpris-ctl
       git remote add hub git@github.com:mariusor/mpris-ctl
-      git push hub --force --all
+      git push hub --force --tags --all
