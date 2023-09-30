@@ -22,6 +22,7 @@
 #define CMD_PLAY_PAUSE  "pp"
 #define CMD_STATUS      "status"
 #define CMD_SEEK        "seek"
+#define CMD_SHUFFLE     "shuffle"
 
 #define CMD_LIST        "list"
 #define CMD_INFO        "info"
@@ -87,6 +88,7 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
+"\t" CMD_SHUFFLE "\t\t[on|off]Change shuffle mode to on or off. If argument is absent it toggles the mode.\n" \
 "\t" CMD_SEEK "\t\t[-][time][ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
 "\t\t\tThe time can be a float value, if absent it defaults to 5 seconds.\n" \
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
@@ -136,6 +138,8 @@ enum cmd {
     c_seek,
     c_list,
     c_info,
+    c_shuffle,
+
     c_count
 };
 
@@ -160,11 +164,14 @@ const char* get_dbus_property_name (enum cmd command)
     if (command == c_list) {
         return INFO_PLAYER_NAME;
     }
+    if (command == c_shuffle) {
+        return MPRIS_PNAME_SHUFFLE;
+    }
 
     return NULL;
 }
 
-const char* get_dbus_method (enum cmd command)
+const char *get_dbus_method (enum cmd command)
 {
     if (command == c_play) {
         return MPRIS_METHOD_PLAY;
@@ -186,6 +193,9 @@ const char* get_dbus_method (enum cmd command)
     }
     if (command == c_seek) {
         return MPRIS_METHOD_SEEK;
+    }
+    if (command == c_shuffle) {
+        return DBUS_METHOD_SET;
     }
     if (command == c_status || command == c_info || command == c_list) {
         return DBUS_PROPERTIES_INTERFACE;
@@ -252,37 +262,58 @@ void print_mpris_info(mpris_properties *props, const char* format)
 #define TIME_SUFFIX_MIN          "m"
 #define TIME_SUFFIX_MSEC         "ms"
 
-int parse_time_argument(char *time_string)
+int parse_bool_argument(char *bool_string, int *state)
 {
-    int ms = DEFAULT_SKEEP_MSEC;
-    if (NULL == time_string) { return ms; }
+    if (strncmp(bool_string, "false", 5) == 0) {
+        *state = 0;
+    } else if (strncmp(bool_string, "true", 4) == 0) {
+        *state = 1;
+    } else if (strncmp(bool_string, "off", 3) == 0) {
+        *state = 0;
+    } else if (strncmp(bool_string, "on", 2) == 0) {
+        *state = 1;
+    } else if (strncmp(bool_string, "1", 1) == 0) {
+        *state = 1;
+    } else if (strncmp(bool_string, "0", 1) == 0) {
+        *state = 0;
+    } else {
+        return -1;
+    }
+    return 0;
+}
+
+int parse_time_argument(char *time_string, int *ms)
+{
+    *ms = DEFAULT_SKEEP_MSEC;
+    if (NULL == time_string) { return 0; }
 
     float time_units = -1.0;
     char suffix[10] = {0};
 
     int loaded = sscanf(time_string, "%f%s", &time_units, (char*)&suffix);
-    if (loaded == 0 || loaded == EOF) return ms;
+    if (loaded == 0 || loaded == EOF) return 0;
     if (loaded == 1) suffix[0] = 's';
 
     if (strncmp(suffix, TIME_SUFFIX_SEC, 1) == 0) {
-        ms = time_units * 1000;
+        *ms = time_units * 1000;
     }
     if (strncmp(suffix, TIME_SUFFIX_MIN, 1) == 0) {
-        ms = time_units * 60 * 1000;
+        *ms = time_units * 60 * 1000;
     }
     if (strncmp(suffix, TIME_SUFFIX_MSEC, 2) == 0) {
-        ms = time_units;
+        *ms = time_units;
     }
 
-    return ms;
+    return 0;
 }
+
+
+const char commands[12][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT,
+        CMD_PREVIOUS, CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE};
 
 bool arg_is_command(const char *param)
 {
     if (NULL == param) return false;
-
-    const char commands[11][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT,
-        CMD_PREVIOUS, CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO};
 
     for (int i = 0; i < (int)array_size(commands); i++) {
         const char *cmd = commands[i];
@@ -377,6 +408,11 @@ void load_players(struct ctl *cmd, DBusConnection *conn, char *params[], int par
     }
 }
 
+bool has_next_argument(int argc, char** argv, int i)
+{
+    return i+1 < argc && argv[i+1][0] != '-' && argv[i+1][1] != '-';
+}
+
 int main(int argc, char** argv)
 {
     struct ctl cmd = {0};
@@ -401,17 +437,18 @@ int main(int argc, char** argv)
      * MPRIS namespaces, or player names, together with the "active"/"inactive" special values.
      */
     char *info_format = NULL;
+    int shuff_status = -1;
     for (int i = 1; i < argc; i++) {
         if (arg_is_command(argv[i])) {
             char *command = argv[i];
             if (strncmp(command, CMD_SEEK, strlen(CMD_SEEK)) == 0) {
                 cmd.command = c_seek;
-                if (i+1 < argc) {
-                    ms = parse_time_argument(argv[++i]);
+                if (has_next_argument(argc, argv, i)) {
+                    parse_time_argument(argv[++i], &ms);
                 }
             } else if (strncmp(command, CMD_INFO, strlen(CMD_INFO)) == 0) {
                 cmd.command = c_info;
-                if (i+1 < argc && argv[i+1][0] != '-' && argv[i+1][1] != '-') {
+                if (has_next_argument(argc, argv, i)) {
                     info_format = argv[i+1];
                     i++;
                 }
@@ -433,7 +470,17 @@ int main(int argc, char** argv)
                 cmd.command = c_next;
             } else if (strncmp(command, CMD_STOP, strlen(CMD_STOP)) == 0) {
                 cmd.command = c_stop;
+            } else if (strncmp(command, CMD_SHUFFLE, strlen(CMD_SHUFFLE)) == 0) {
+                cmd.command = c_shuffle;
+                if (has_next_argument(argc, argv, i)) {
+                    char *state = argv[++i];
+                    if (parse_bool_argument(state, &shuff_status ) < 0) {
+                        fprintf(stderr, "Invalid shuffle argument %s. Use one of on/off.\n", state);
+                        goto _exit;
+                    }
+                }
             }
+
         } else {
             params[param_count++] = argv[i];
         }
@@ -463,11 +510,10 @@ int main(int argc, char** argv)
 
     char *dbus_method = (char*)get_dbus_method(cmd.command);
     if (NULL == dbus_method) {
-        //fprintf(stderr, "Invalid command %s (use help for help)\n", command);
         goto _exit;
     }
     if (cmd.player_count == 0) {
-        fprintf(stderr, "No players found\n");
+        fprintf(stderr, "No players found.\n");
         goto _exit;
     }
 
@@ -478,18 +524,31 @@ int main(int argc, char** argv)
             if (cmd.command != c_play) continue;
         }
 
-        const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
-        if (NULL == dbus_property) {
-            if (cmd.command == c_seek) {
-                seek (conn, player, ms);
+        //const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
+        if (cmd.command == c_info) {
+            print_mpris_info(&player.properties, info_format);
+            cmd.status = EXIT_SUCCESS;
+        } else if (cmd.command == c_seek) {
+            if (seek (conn, player, ms) > 0) {
+                cmd.status = EXIT_SUCCESS;
+            }
+        } else if (cmd.command == c_shuffle) {
+            bool state = false;
+            if (shuff_status >= 0) {
+                state = (bool)shuff_status;
             } else {
-                call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, dbus_method);
+                state = !player.properties.shuffle;
+            }
+            if (shuffle(conn, player, state) > 0) {
+                cmd.status = EXIT_SUCCESS;
             }
         } else {
-            print_mpris_info(&player.properties, info_format);
+            DBusMessage *msg = call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, dbus_method);
+            if (NULL != msg) {
+                cmd.status = EXIT_SUCCESS;
+            }
         }
     }
-    cmd.status = EXIT_SUCCESS;
 
     if (NULL != conn) {
         dbus_connection_close(conn);

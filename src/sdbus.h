@@ -41,6 +41,7 @@
 #define DBUS_METHOD_LIST_NAMES     "ListNames"
 #define DBUS_METHOD_GET_ALL        "GetAll"
 #define DBUS_METHOD_GET            "Get"
+#define DBUS_METHOD_SET            "Set"
 
 #define MPRIS_METADATA_BITRATE      "bitrate"
 #define MPRIS_METADATA_ART_URL      "mpris:artUrl"
@@ -281,7 +282,7 @@ bool extract_boolean_var(DBusMessageIter *iter, DBusError *error)
 
 void load_metadata(mpris_metadata *track, DBusMessageIter *iter)
 {
-    DBusError err;
+    DBusError err = {0};
     dbus_error_init(&err);
 
     if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(iter)) {
@@ -345,7 +346,7 @@ void load_metadata(mpris_metadata *track, DBusMessageIter *iter)
                 extract_string_var(track->url, &dictIter, &err);
             }
             if (dbus_error_is_set(&err)) {
-                fprintf(stderr, "err: %s, %s\n", key, err.message);
+                fprintf(stderr, "error: %s, %s\n", key, err.message);
                 dbus_error_free(&err);
             }
         }
@@ -364,7 +365,6 @@ void get_player_identity(char *identity, DBusConnection *conn, const char* desti
     if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return; }
 
     DBusMessage* msg;
-    DBusError err;
     DBusPendingCall* pending;
     DBusMessageIter params;
 
@@ -374,7 +374,9 @@ void get_player_identity(char *identity, DBusConnection *conn, const char* desti
     char *arg_interface = MPRIS_PLAYER_NAMESPACE;
     char *arg_identity = MPRIS_ARG_PLAYER_IDENTITY;
 
+    DBusError err = {0};
     dbus_error_init(&err);
+
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
     if (NULL == msg) { return; }
@@ -412,6 +414,7 @@ void get_player_identity(char *identity, DBusConnection *conn, const char* desti
         extract_string_var(identity, &rootIter, &err);
     }
     if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
         dbus_error_free(&err);
     }
 
@@ -432,8 +435,8 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
     DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter params;
-    DBusError err;
 
+    DBusError err = {0};
     dbus_error_init(&err);
 
     char* interface = DBUS_PROPERTIES_INTERFACE;
@@ -565,6 +568,9 @@ int seek(DBusConnection* conn, mpris_player player, int ms)
     DBusPendingCall* pending;
     DBusMessageIter args;
 
+    DBusError err = {0};
+    dbus_error_init(&err);
+
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
     if (NULL == msg) { return status; }
@@ -572,12 +578,13 @@ int seek(DBusConnection* conn, mpris_player player, int ms)
     int64_t usec = ms * 1000;
     dbus_message_iter_init_append(msg, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_INT64, &usec)) {
-         goto _unref_message_err;
+        status = -1;
+        goto _unref_message_err;
     }
 
     // send message and get a handle for a reply
-    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) ||
-        NULL == pending) {
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) || NULL == pending) {
+        status = -1;
         goto _unref_message_err;
     }
     dbus_connection_flush(conn);
@@ -588,11 +595,88 @@ int seek(DBusConnection* conn, mpris_player player, int ms)
     DBusMessage* reply = NULL;
     // get the reply message
     reply = dbus_pending_call_steal_reply(pending);
-    if (NULL == reply) { goto _unref_pending_err; }
+    if (NULL == reply) {
+        status = -1;
+        goto _unref_pending_err;
+    }
+
+    dbus_message_unref(reply);
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
+        dbus_error_free(&err);
+        status = -1;
+    }
 
     dbus_message_unref(reply);
 
 _unref_pending_err:
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+_unref_message_err:
+    // free message
+    dbus_message_unref(msg);
+
+    return status;
+}
+
+int shuffle(DBusConnection* conn, mpris_player player, bool state)
+{
+    if (NULL == conn) { return 0; }
+    int status = 0;
+
+    DBusError err = {0};
+    dbus_error_init(&err);
+
+    DBusMessage* msg;
+    DBusPendingCall* pending;
+    DBusMessageIter args;
+
+    char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    char* arg_shuffle = MPRIS_PNAME_SHUFFLE;
+
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_PROPERTIES_INTERFACE, DBUS_METHOD_SET);
+    if (NULL == msg) { return status; }
+
+    dbus_message_iter_init_append(msg, &args);
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_interface)) {
+        goto _unref_message_err;
+    }
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_shuffle)) {
+        goto _unref_message_err;
+    }
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_BOOLEAN, &state)) {
+        goto _unref_message_err;
+    }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) || NULL == pending) {
+        goto _unref_message_err;
+    }
+    dbus_connection_flush(conn);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply = NULL;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) {
+        goto _unref_pending_err;
+    }
+
+    dbus_message_unref(reply);
+
+_unref_pending_err:
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
+        dbus_error_free(&err);
+        status = -1;
+    }
+
     // free the pending message handle
     dbus_pending_call_unref(pending);
 _unref_message_err:
