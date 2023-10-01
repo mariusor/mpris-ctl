@@ -648,7 +648,14 @@ int shuffle(DBusConnection* conn, mpris_player player, bool state)
         goto _unref_message_err;
     }
 
-    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_BOOLEAN, &state)) {
+    DBusMessageIter variant = {0};
+    if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &variant)) {
+        goto _unref_message_err;
+    }
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &state)) {
+        goto _unref_message_err;
+    }
+    if (!dbus_message_iter_close_container(&args, &variant)) {
         goto _unref_message_err;
     }
 
