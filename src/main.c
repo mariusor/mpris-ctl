@@ -153,24 +153,6 @@ struct ctl {
 
 };
 
-const char* get_dbus_property_name (enum cmd command)
-{
-    if (command == c_status) {
-        return MPRIS_PROP_PLAYBACK_STATUS;
-    }
-    if (command == c_info) {
-        return MPRIS_PROP_METADATA;
-    }
-    if (command == c_list) {
-        return INFO_PLAYER_NAME;
-    }
-    if (command == c_shuffle) {
-        return MPRIS_PNAME_SHUFFLE;
-    }
-
-    return NULL;
-}
-
 const char *get_dbus_method (enum cmd command)
 {
     if (command == c_play) {
@@ -524,8 +506,7 @@ int main(int argc, char** argv)
             if (cmd.command != c_play) continue;
         }
 
-        //const char *dbus_property = (char*)get_dbus_property_name(cmd.command);
-        if (cmd.command == c_info) {
+        if (cmd.command == c_info || cmd.command == c_status || cmd.command == c_list) {
             print_mpris_info(&player.properties, info_format);
             cmd.status = EXIT_SUCCESS;
         } else if (cmd.command == c_seek) {
