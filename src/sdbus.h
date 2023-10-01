@@ -60,6 +60,10 @@
 #define MPRIS_METADATA_VALUE_PLAYING "Playing"
 #define MPRIS_METADATA_VALUE_PAUSED  "Paused"
 
+#define MPRIS_LOOPSTATUS_VALUE_NONE      "None"
+#define MPRIS_LOOPSTATUS_VALUE_TRACK     "Track"
+#define MPRIS_LOOPSTATUS_VALUE_PLAYLIST  "Playlist"
+
 // The default timeout leads to hangs when calling
 //   certain players which don't seem to reply to MPRIS methods
 #define DBUS_CONNECTION_TIMEOUT    100 //ms
@@ -653,6 +657,80 @@ int shuffle(DBusConnection* conn, mpris_player player, bool state)
         goto _unref_message_err;
     }
     if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &state)) {
+        goto _unref_message_err;
+    }
+    if (!dbus_message_iter_close_container(&args, &variant)) {
+        goto _unref_message_err;
+    }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) || NULL == pending) {
+        goto _unref_message_err;
+    }
+    dbus_connection_flush(conn);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply = NULL;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) {
+        goto _unref_pending_err;
+    }
+
+    dbus_message_unref(reply);
+
+_unref_pending_err:
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
+        dbus_error_free(&err);
+        status = -1;
+    }
+
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+_unref_message_err:
+    // free message
+    dbus_message_unref(msg);
+
+    return status;
+}
+
+int set_loopstatus(DBusConnection* conn, mpris_player player, const char* loop_state)
+{
+    if (NULL == conn) { return 0; }
+    int status = 0;
+
+    DBusError err = {0};
+    dbus_error_init(&err);
+
+    DBusMessage* msg;
+    DBusPendingCall* pending;
+    DBusMessageIter args;
+
+    char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    char* arg_loopstatus = MPRIS_PNAME_LOOPSTATUS;
+
+    // create a new method call and check for errors
+    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_PROPERTIES_INTERFACE, DBUS_METHOD_SET);
+    if (NULL == msg) { return status; }
+
+    dbus_message_iter_init_append(msg, &args);
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_interface)) {
+        goto _unref_message_err;
+    }
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_loopstatus)) {
+        goto _unref_message_err;
+    }
+
+    DBusMessageIter variant = {0};
+    if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_STRING_AS_STRING, &variant)) {
+        goto _unref_message_err;
+    }
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &loop_state)) {
         goto _unref_message_err;
     }
     if (!dbus_message_iter_close_container(&args, &variant)) {

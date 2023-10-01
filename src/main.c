@@ -23,10 +23,20 @@
 #define CMD_STATUS      "status"
 #define CMD_SEEK        "seek"
 #define CMD_SHUFFLE     "shuffle"
+#define CMD_REPEAT      "repeat"
 
 #define CMD_LIST        "list"
 #define CMD_INFO        "info"
-#define ARG_PLAYER      "--player"
+
+#define ARG_PLAYER       "--player"
+#define ARG_REPEAT_TRACK "--track"
+#define ARG_REPEAT_PLIST "--playlist"
+
+#define PLAYER_ACTIVE    "active"
+#define PLAYER_INACTIVE  "inactive"
+
+#define BOOL_ON          "on"
+#define BOOL_OFF         "off"
 
 #define INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
 #define INFO_FULL_STATUS    "Player name:\t" INFO_PLAYER_NAME "\n" \
@@ -68,9 +78,6 @@
 #define TRUE_LABEL      "true"
 #define FALSE_LABEL     "false"
 
-#define PLAYER_ACTIVE    "active"
-#define PLAYER_INACTIVE  "inactive"
-
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
 "Usage:\n  %s [" ARG_PLAYER " " PLAYER_ACTIVE " | " PLAYER_INACTIVE " | <name ...>] [COMMAND] - Control running MPRIS player\n" \
 "\n" \
@@ -88,7 +95,8 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
-"\t" CMD_SHUFFLE "\t\t[on|off]Change shuffle mode to on or off. If argument is absent it toggles the mode.\n" \
+"\t" CMD_SHUFFLE "\t\t[" BOOL_ON "|" BOOL_OFF "] Change shuffle mode to on or off. If argument is absent it toggles the mode.\n" \
+"\t" CMD_REPEAT "\t\t[" ARG_REPEAT_TRACK "|" ARG_REPEAT_PLIST "][" BOOL_ON "|" BOOL_OFF "] Change the loop status. If argument is absent it toggles the mode.\n" \
 "\t" CMD_SEEK "\t\t[-][time][ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
 "\t\t\tThe time can be a float value, if absent it defaults to 5 seconds.\n" \
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
@@ -126,6 +134,9 @@ const char* get_version(void)
     return VERSION_HASH;
 }
 
+const char commands[13][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT, CMD_PREVIOUS,
+    CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE, CMD_REPEAT,};
+
 enum cmd {
     c_help,
     c_play,
@@ -139,6 +150,7 @@ enum cmd {
     c_list,
     c_info,
     c_shuffle,
+    c_repeat,
 
     c_count
 };
@@ -177,6 +189,9 @@ const char *get_dbus_method (enum cmd command)
         return MPRIS_METHOD_SEEK;
     }
     if (command == c_shuffle) {
+        return DBUS_METHOD_SET;
+    }
+    if (command == c_repeat) {
         return DBUS_METHOD_SET;
     }
     if (command == c_status || command == c_info || command == c_list) {
@@ -244,20 +259,32 @@ void print_mpris_info(mpris_properties *props, const char* format)
 #define TIME_SUFFIX_MIN          "m"
 #define TIME_SUFFIX_MSEC         "ms"
 
-int parse_bool_argument(char *bool_string, int *state)
+enum bool_arg {
+    b_unset,
+    b_on,
+    b_off,
+};
+
+enum repeat_mode {
+    ls_track,
+    ls_playlist,
+    ls_count,
+};
+
+int parse_bool_argument(char *bool_string, enum bool_arg *state)
 {
-    if (strncmp(bool_string, "false", 5) == 0) {
-        *state = 0;
-    } else if (strncmp(bool_string, "true", 4) == 0) {
-        *state = 1;
-    } else if (strncmp(bool_string, "off", 3) == 0) {
-        *state = 0;
-    } else if (strncmp(bool_string, "on", 2) == 0) {
-        *state = 1;
+    if (strncmp(bool_string, FALSE_LABEL, strlen(FALSE_LABEL)) == 0) {
+        *state = b_off;
+    } else if (strncmp(bool_string, TRUE_LABEL, strlen(TRUE_LABEL)) == 0) {
+        *state = b_on;
+    } else if (strncmp(bool_string, BOOL_OFF, strlen(BOOL_OFF)) == 0) {
+        *state = b_off;
+    } else if (strncmp(bool_string, BOOL_ON, strlen(BOOL_ON)) == 0) {
+        *state = b_on;
     } else if (strncmp(bool_string, "1", 1) == 0) {
-        *state = 1;
+        *state = b_on;
     } else if (strncmp(bool_string, "0", 1) == 0) {
-        *state = 0;
+        *state = b_off;
     } else {
         return -1;
     }
@@ -289,10 +316,6 @@ int parse_time_argument(char *time_string, int *ms)
     return 0;
 }
 
-
-const char commands[12][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT,
-        CMD_PREVIOUS, CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE};
-
 bool arg_is_command(const char *param)
 {
     if (NULL == param) return false;
@@ -306,16 +329,19 @@ bool arg_is_command(const char *param)
     return false;
 }
 
-void load_players(struct ctl *cmd, DBusConnection *conn, char *params[], int param_count)
+void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], int param_count, enum repeat_mode *ls)
 {
     static struct option long_options[] = {
         {"player", required_argument, NULL, 1},
         {"help", no_argument, NULL, 2},
+        {"track", no_argument, NULL, 3},
+        {"playlist", no_argument, NULL, 4},
         {0},
     };
 
-    int player_names_count = 0;
     opterr = 0; // Skip errors
+
+    int player_names_count = 0;
     bool active_players = false;
     bool inactive_players = false;
     while (true) {
@@ -342,6 +368,12 @@ void load_players(struct ctl *cmd, DBusConnection *conn, char *params[], int par
                 // TODO(marius): I should make it that the --help argument shows the current command's help
                 // Currently we just show full help.
                 cmd->command = c_help;
+                break;
+            case 3:
+                *ls = ls_track;
+                break;
+            case 4:
+                *ls = ls_playlist;
                 break;
             default:
                 break;
@@ -405,9 +437,12 @@ int main(int argc, char** argv)
         cmd.command = c_help;
         goto _help;
     }
+
     int ms = DEFAULT_SKEEP_MSEC;
-    char **params = calloc(argc+1, sizeof(char*));
-    int param_count = 0;
+    char *info_format = NULL;
+
+    enum bool_arg on_arg;
+    enum repeat_mode repeat_mode = {0};
 
     /**
      * First we go through the arguments to determine the command
@@ -418,8 +453,6 @@ int main(int argc, char** argv)
      * Currently we only have the --help and --player arguments. The former can take multiple
      * MPRIS namespaces, or player names, together with the "active"/"inactive" special values.
      */
-    char *info_format = NULL;
-    int shuff_status = -1;
     for (int i = 1; i < argc; i++) {
         if (arg_is_command(argv[i])) {
             char *command = argv[i];
@@ -456,15 +489,21 @@ int main(int argc, char** argv)
                 cmd.command = c_shuffle;
                 if (has_next_argument(argc, argv, i)) {
                     char *state = argv[++i];
-                    if (parse_bool_argument(state, &shuff_status ) < 0) {
-                        fprintf(stderr, "Invalid shuffle argument %s. Use one of on/off.\n", state);
+                    if (parse_bool_argument(state, &on_arg) < 0) {
+                        fprintf(stderr, "Invalid shuffle argument '%s'. Use one of 'on'/'off'.\n", state);
+                        goto _exit;
+                    }
+                }
+            } else if (strncmp(command, CMD_REPEAT, strlen(CMD_REPEAT)) == 0) {
+                cmd.command = c_repeat;
+                if (has_next_argument(argc, argv, i)) {
+                    char *state = argv[++i];
+                    if (parse_bool_argument(state, &on_arg) < 0) {
+                        fprintf(stderr, "Invalid repeat argument '%s'. Use one of 'on'/'off'.\n", state);
                         goto _exit;
                     }
                 }
             }
-
-        } else {
-            params[param_count++] = argv[i];
         }
     }
     if (cmd.command == c_info && NULL == info_format) {
@@ -488,7 +527,11 @@ int main(int argc, char** argv)
     if (NULL == conn) {
         goto _exit;
     }
-    load_players(&cmd, conn, argv, argc);
+    load_players_flags(&cmd, conn, argv, argc, &repeat_mode);
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
+        dbus_error_free(&err);
+    }
 
     char *dbus_method = (char*)get_dbus_method(cmd.command);
     if (NULL == dbus_method) {
@@ -515,12 +558,38 @@ int main(int argc, char** argv)
             }
         } else if (cmd.command == c_shuffle) {
             bool state = false;
-            if (shuff_status >= 0) {
-                state = (bool)shuff_status;
-            } else {
+            if (on_arg == b_unset) {
                 state = !player.properties.shuffle;
+            } else if (on_arg == b_on) {
+                state = true;
+            } else {
+                state = false;
             }
             if (shuffle(conn, player, state) > 0) {
+                cmd.status = EXIT_SUCCESS;
+            }
+        } else if (cmd.command == c_repeat) {
+            const char* state;
+            if (on_arg == b_on) {
+                if (repeat_mode == ls_track) {
+                    state = MPRIS_LOOPSTATUS_VALUE_TRACK;
+                } else {
+                    state = MPRIS_LOOPSTATUS_VALUE_PLAYLIST;
+                }
+            } else if (on_arg == b_off) {
+                state = MPRIS_LOOPSTATUS_VALUE_NONE;
+            } else {
+                if (strncmp(player.properties.loop_status, MPRIS_LOOPSTATUS_VALUE_NONE, strlen(MPRIS_LOOPSTATUS_VALUE_NONE)) != 0) {
+                    state = MPRIS_LOOPSTATUS_VALUE_NONE;
+                } else {
+                    if (repeat_mode == ls_track) {
+                        state = MPRIS_LOOPSTATUS_VALUE_TRACK;
+                    } else {
+                        state = MPRIS_LOOPSTATUS_VALUE_PLAYLIST;
+                    }
+                }
+            }
+            if (set_loopstatus(conn, player, state) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }
         } else {
@@ -528,6 +597,10 @@ int main(int argc, char** argv)
             if (NULL != msg) {
                 cmd.status = EXIT_SUCCESS;
             }
+        }
+        if (dbus_error_is_set(&err)) {
+            fprintf(stderr, "error: %s\n", err.message);
+            dbus_error_free(&err);
         }
     }
 
