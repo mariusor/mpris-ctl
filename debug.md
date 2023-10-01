@@ -10,3 +10,6 @@ dbus-send --print-reply --type=method_call --dest=org.mpris.MediaPlayer2.spotify
 SetShuffle:
 dbus-send --print-reply --type=method_call --dest=org.mpris.MediaPlayer2.ncspot /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Set string:org.mpris.MediaPlayer2.Player string:Shuffle variant:boolean:'true'
 
+Seek:
+dbus-send --print-reply --type=method_call --dest=org.mpris.MediaPlayer2.ncspot /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Seek string:org.mpris.MediaPlayer2.Player int64:10
+
