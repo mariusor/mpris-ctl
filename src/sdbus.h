@@ -217,6 +217,8 @@ void extract_string_var(char result[MAX_OUTPUT_LENGTH], DBusMessageIter *iter, D
             }
             if (!dbus_message_iter_has_next(&arrayIter)) {
                 break;
+            } else {
+                strncat(result, ", ", 3);
             }
             dbus_message_iter_next(&arrayIter);
         }
