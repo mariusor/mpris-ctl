@@ -31,38 +31,52 @@ twice, once for each state: *--player active --player inactive*
 # COMMANDS
 
 *play*
-	Begin playing
+	Begin playing.
 
 *pp*
-	Toggle play or pause
+	Toggle play or pause.
+
+*shuffle* [on|off]
+	Change shuffle mode to on or off.
+
+	If both arguments are absent, the mode is toggled.
+
+*repeat* [--track|--playlist][on|off]
+	Change the loop status to on or off.
+
+	If the both arguments are absent the mode is toggled.
+
+	The *--track*/*--playlist* flag controls if the repeat mode should be for the
+	current track or for the whole playlist.
 
 *pause*
-	Pause the player
+	Pause the player.
 
 *stop*
-	Stop the player
+	Stop the player.
 
 *next*
-	Change to the next track play-list
+	Change to the next track playlist.
 
 *prev*
-	Change to the previous track in the play-list
+	Change to the previous track in the playlist.
 
 *seek* [-][time][unit]
 	Seek forwards in the track for given time. The time value can be a floating
 	point number as understood by the current locale.
 
-	The unit can be one of:  _s_: seconds (default), _ms_: milliseconds, _m_: minutes
+	The unit can be one of:  *s*: seconds (default), *ms*: milliseconds, *m*: minutes
 
 	A negative value seeks backwards.
 
 	The default is 5 seconds.
 
 *status*
-	Get the playback status. Equivalent to the *info %play\_status* action
+	Get the playback status. Equivalent to the *info %play\_status* action.
 
 *list*
-	Get the name of the running player(s). Equivalent to the *info %player\_name* action
+	Get the name of the running player(s). Equivalent to the *info
+	%player\_name* action.
 
 *info* [format string]
 	Print information about the current track. *format string* can include any of the following *FORMAT SPECIFIERS*.
@@ -70,52 +84,52 @@ twice, once for each state: *--player active --player inactive*
 # FORMAT SPECIFIERS
 
 *%player\_name*
-	prints the name of the media-player
+	prints the name of the media-player.
 
 *%track\_name*
-	prints the track name
+	prints the track name.
 
 *%track\_number*
-	prints the track number
+	prints the track number.
 
 *%track\_length*
-	prints the track length in seconds
+	prints the track length in seconds.
 
 *%artist\_name*
-	prints the artist name
+	prints the artist name.
 
 *%album\_name*
-	prints the album name
+	prints the album name.
 
 *%album\_artist*
-	prints the album artist
+	prints the album artist.
 
 *%art\_url*
-	prints the URL of the cover art image
+	prints the URL of the cover art image.
 
 *%play\_status*
-	prints the playback status
+	prints the playback status.
 
 *%shuffle*
-	prints the shuffle mode
+	prints the shuffle mode.
 
 *%volume*
-	prints the volume level
+	prints the volume level.
 
 *%loop\_status*
-	prints the loop status
+	prints the loop status.
 
 *%position*
-	prints the position, in seconds, in the current track
+	prints the position, in seconds, in the current track.
 
 *%bitrate*
-	prints the track bit-rate
+	prints the track bit-rate.
 
 *%comment*
-	prints the track comment
+	prints the track comment.
 
 *%full*
-	prints all available information
+	prints all available information.
 
 # EXAMPLE
 
