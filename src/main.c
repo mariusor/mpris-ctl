@@ -95,17 +95,19 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t" CMD_STOP "\t\tStop the player\n" \
 "\t" CMD_NEXT "\t\tChange track to the next in the playlist\n" \
 "\t" CMD_PREVIOUS "\t\tChange track to the previous in the playlist\n" \
+"\n" \
 "\t" CMD_SHUFFLE "\t\t[" BOOL_ON "|" BOOL_OFF "] Change shuffle mode to on or off. If argument is absent it toggles the mode.\n" \
 "\t" CMD_REPEAT "\t\t[" ARG_REPEAT_TRACK "|" ARG_REPEAT_PLIST "][" BOOL_ON "|" BOOL_OFF "] Change the loop status. If argument is absent it toggles the mode.\n" \
+"\n" \
 "\t" CMD_SEEK "\t\t[-][time][ms|s|m] Seek forwards or backwards in current track for 'time'.\n" \
 "\t\t\tThe time can be a float value, if absent it defaults to 5 seconds.\n" \
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
 "\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
 "\n" \
-"\t" CMD_INFO "\t\t<format> Display information about the current track.\n" \
-"\t\t\tThe default format is '%s'\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
+"\t" CMD_INFO "\t\t<format> Display information about the current track.\n" \
+"\t\t\tThe default format is '%s'\n" \
 "\n" \
 "Format specifiers for " CMD_INFO " command:\n" \
 "\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
