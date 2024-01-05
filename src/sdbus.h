@@ -559,10 +559,6 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
     return;
 
 _unref_pending_err:
-    if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "error: %s\n", err.message);
-        dbus_error_free(&err);
-    }
     {
         dbus_pending_call_unref(pending);
         goto _unref_message_err;
@@ -616,13 +612,13 @@ int seek(DBusConnection* conn, mpris_player player, int ms)
     }
 
     dbus_message_unref(reply);
-_unref_pending_err:
     if (dbus_error_is_set(&err)) {
         fprintf(stderr, "error: %s\n", err.message);
         dbus_error_free(&err);
         status = -1;
     }
 
+_unref_pending_err:
     // free the pending message handle
     dbus_pending_call_unref(pending);
 _unref_message_err:
@@ -689,6 +685,7 @@ int shuffle(DBusConnection* conn, mpris_player player, bool state)
     }
 
     dbus_message_unref(reply);
+
 _unref_pending_err:
     if (dbus_error_is_set(&err)) {
         fprintf(stderr, "error: %s\n", err.message);
@@ -762,6 +759,7 @@ int set_loopstatus(DBusConnection* conn, mpris_player player, const char* loop_s
     }
 
     dbus_message_unref(reply);
+
 _unref_pending_err:
     if (dbus_error_is_set(&err)) {
         fprintf(stderr, "error: %s\n", err.message);
@@ -791,9 +789,6 @@ int load_mpris_players(DBusConnection* conn, mpris_player *players)
     DBusMessage* msg;
     DBusPendingCall* pending;
     int cnt = 0;
-
-    DBusError err = {0};
-    dbus_error_init(&err);
 
     // create a new method call and check for errors
     msg = dbus_message_new_method_call(destination, path, interface, method);
@@ -835,13 +830,7 @@ int load_mpris_players(DBusConnection* conn, mpris_player *players)
         }
     }
     dbus_message_unref(reply);
-
 _unref_pending_err:
-    if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "error: %s\n", err.message);
-        dbus_error_free(&err);
-    }
-
     // free the pending message handle
     dbus_pending_call_unref(pending);
 _unref_message_err:

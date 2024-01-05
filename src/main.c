@@ -426,7 +426,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
 
 bool has_next_argument(int argc, char** argv, int i)
 {
-    return i+1 < argc && argv[i+1][0] != '-' && argv[i+1][1] != '-';
+    return i+1 < argc && strncmp(argv[i+1], "--", 2) != 0;
 }
 
 int main(int argc, char** argv)
