@@ -49,7 +49,7 @@
 "Art URL:\t" INFO_ART_URL "\n" \
 "Track:\t\t" INFO_TRACK_NUMBER "\n" \
 "Length:\t\t" INFO_TRACK_LENGTH "\n" \
-"Volume:\t\t" INFO_VOLUME "%\n" \
+"Volume:\t\t" INFO_VOLUME "\n" \
 "Loop status:\t" INFO_LOOP_STATUS "\n" \
 "Shuffle:\t" INFO_SHUFFLE_MODE "\n" \
 "Position:\t" INFO_POSITION "\n" \
@@ -122,7 +122,7 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
 "\t%" INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" INFO_TRACK_NUMBER "\tprints the track number\n" \
-"\t%" INFO_TRACK_LENGTH "\tprints the track length in seconds\n" \
+"\t%" INFO_TRACK_LENGTH "\tprints the track length\n" \
 "\t%" INFO_ARTIST_NAME "\tprints the artist name\n" \
 "\t%" INFO_ALBUM_NAME "\tprints the album name\n" \
 "\t%" INFO_ALBUM_ARTIST "\tprints the album artist\n" \
@@ -229,20 +229,42 @@ void print_help(char* name)
     fprintf(stdout, help_msg, version, name, info_def);
 }
 
-void print_mpris_info(mpris_properties *props, const char* format)
+void format_nanosecond_interval(char *destination, const size_t max_len, const int64_t time_nanoseconds)
+{
+    int32_t time_seconds = time_nanoseconds / 1000000;
+    const short time_minutes = time_seconds / 60;
+    const short time_hours = time_minutes / 60;
+    const short time_days = time_hours / 24;
+    if (time_minutes > 0) {
+        if (time_hours > 0) {
+            if (time_days > 0) {
+                snprintf(destination, max_len, "%dd %dh %dm %ds", time_days, time_hours, time_minutes, time_seconds % 60);
+                return;
+            }
+            snprintf(destination, max_len, "%dh %dm %ds", time_hours, time_minutes, time_seconds % 60);
+            return;
+        }
+        snprintf(destination, max_len, "%dm %ds", time_minutes, time_seconds % 60);
+        return;
+    }
+
+    snprintf(destination, max_len, "%ds", time_seconds);
+}
+
+void print_mpris_info(const mpris_properties *props, const char* format)
 {
     const char* info_full = INFO_FULL_STATUS;
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
-    char volume_label[7];
-    snprintf(volume_label, 7, "%.2lf", props->volume*MAX_VOLUME);
-    char pos_label[11];
-    snprintf(pos_label, 11, "%.2lfs", (props->position / 1000000.0));
+    char volume_label[8];
+    snprintf(volume_label, 8, "%.2lf%%", props->volume*MAX_VOLUME);
+    char pos_label[20];
+    format_nanosecond_interval(pos_label, 20, props->position);
     char track_number_label[6];
     snprintf(track_number_label, 6, "%d", props->metadata.track_number);
     char bitrate_label[6];
     snprintf(bitrate_label, 6, "%d", props->metadata.bitrate);
-    char length_label[15];
-    snprintf(length_label, 15, "%.2lfs", (props->metadata.length / 1000000.0));
+    char length_label[20];
+    format_nanosecond_interval(length_label, 20, props->metadata.length);
 
     char output[MAX_OUTPUT_LENGTH*10];
     memcpy(output, format, strlen(format) + 1);
