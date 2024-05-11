@@ -108,8 +108,9 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
 "\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
 "\n" \
-"\t" CMD_VOLUME "\t\tpercentage Modify the volume for the player.\n" \
-"\t\t\tPercentage represents a single numeric value from 0 - 100, it sets the volume to that value.\n" \
+"\t" CMD_VOLUME "\t\tpercentage[+|-] Modify the volume for the player.\n" \
+"\t\t\tThe percentage can be a float value from 0% to 100% to set the volume to the respective level.\n" \
+"\t\t\tThe percentage can be followed by a \"+\", or a \"-\", to increase, or decrease the volume by the respective value.\n" \
 "\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
@@ -175,6 +176,15 @@ struct ctl {
 
 };
 
+int volume_change_valid(const struct volume_change v)
+{
+    if (v.type == volume_change_absolute) {
+        if (v.value < MIN_VOLUME) return -1;
+    }
+    if (v.value > MAX_VOLUME) return -1;
+
+    return 0;
+}
 const char *get_dbus_method (enum cmd command)
 {
     if (command == c_play) {
@@ -322,13 +332,20 @@ int parse_time_argument(const char *time_string, int *ms)
     return 0;
 }
 
-int parse_decimal_argument(const char *decimal_string, double *value)
+int parse_decimal_argument(const char *decimal_string, struct volume_change *vol)
 {
-    const int loaded = sscanf(decimal_string, "%lf", value);
-    if (loaded == 1) {
-        return 0;
+    char suffix = 0;
+    const int loaded = sscanf(decimal_string, "%lf%c", &vol->value, &suffix);
+    if (loaded == 0) {
+        return -1;
     }
-    return -1;
+    if (loaded == 2) {
+        vol->type = volume_change_relative;
+        if (suffix == '-') {
+            vol->value = -1.0l * vol->value;
+        }
+    }
+    return 0;
 }
 
 bool arg_is_command(const char *param)
@@ -458,7 +475,7 @@ int main(int argc, char** argv)
 
     enum bool_arg on_arg;
     enum repeat_mode repeat_mode = {0};
-    double volume = 0.0l;
+    struct volume_change volume = {0};
 
     /**
      * First we go through the arguments to determine the command
@@ -524,11 +541,15 @@ int main(int argc, char** argv)
                 if (has_next_argument(argc, argv, i)) {
                     char *state = argv[++i];
                     if (parse_decimal_argument(state, &volume) < 0) {
-                        fprintf(stderr, "Invalid volume argument '%s'. Use a numeric value.\n", state);
+                        fprintf(stderr, "Invalid volume argument '%s'. Use a float value.\n", state);
                         goto _exit;
                     }
-                    if (volume < MIN_VOLUME || volume > MAX_VOLUME) {
-                        fprintf(stderr, "Invalid volume value '%s'. Use a value between %.2f - %.2f.\n", state, MIN_VOLUME, MAX_VOLUME);
+                    if (volume_change_valid(volume) < 0) {
+                        if (volume.type == volume_change_absolute) {
+                            fprintf(stderr, "Invalid volume value '%s'. Use a value between %.2f%% andd %.2f%%.\n", state, MIN_VOLUME, MAX_VOLUME);
+                        } else {
+                            fprintf(stderr, "Invalid volume value '%s'. Use a value less than %.2f%%.\n", state, MAX_VOLUME);
+                        }
                         goto _exit;
                     }
                 } else {
@@ -625,7 +646,7 @@ int main(int argc, char** argv)
                 cmd.status = EXIT_SUCCESS;
             }
         } else if (cmd.command == c_volume) {
-            volume = volume / MAX_VOLUME;
+            volume.value = volume.value / MAX_VOLUME;
             if (set_volume(conn, player, volume) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }

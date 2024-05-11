@@ -123,6 +123,16 @@ void mpris_metadata_init(mpris_metadata* metadata)
     memcpy(metadata->title, "unknown", 8);
 }
 
+enum volume_change_type {
+    volume_change_absolute,
+    volume_change_relative,
+};
+
+struct volume_change {
+    double value;
+    enum volume_change_type type;
+};
+
 DBusMessage* call_dbus_method(DBusConnection* conn, const char* destination, const char* path, const char* interface, char* method)
 {
     if (NULL == conn) { return NULL; }
@@ -769,10 +779,17 @@ _unref_message_err:
     return status;
 }
 
-int set_volume(DBusConnection* conn, const mpris_player player, const double volume)
+int set_volume(DBusConnection* conn, const mpris_player player, const struct volume_change volume)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
+
+    double abs_volume = volume.value;
+    if (volume.type == volume_change_relative) {
+        mpris_properties p = {0};
+        load_mpris_properties(conn, player.namespace, &p);
+        abs_volume += p.volume;
+    }
 
     DBusError err = {0};
     dbus_error_init(&err);
@@ -801,8 +818,7 @@ int set_volume(DBusConnection* conn, const mpris_player player, const double vol
     if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_DOUBLE_AS_STRING, &variant)) {
         goto _unref_message_err;
     }
-    fprintf(stderr, "volume to dbus is %.2f\n", volume);
-    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &volume)) {
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &abs_volume)) {
         goto _unref_message_err;
     }
     if (!dbus_message_iter_close_container(&args, &variant)) {
