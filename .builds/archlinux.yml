@@ -1,4 +1,6 @@
 image: archlinux
+environment:
+  DEBUGINFOD_URLS: https://debuginfod.archlinux.org
 packages:
   - base-devel
   - clang
@@ -8,8 +10,14 @@ sources:
 secrets:
   - 3dcea276-38d6-4a7e-85e5-20cbc903e1ea
 tasks:
-  - build: |
+  - build_debug: |
       test ${BUILD_SUBMITTER} != "git.sr.ht" && complete-build
+      cd mpris-ctl
+      make debug
+  - build_release: |
+      cd mpris-ctl
+      make release
+  - check: |
       cd mpris-ctl
       make check
       ## this needs libdbus and glibc to be built with the memory sanitizer, which is out of scope for the moment

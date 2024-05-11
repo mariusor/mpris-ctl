@@ -1,0 +1,16 @@
+image: alpine/edge
+packages:
+  - build-base
+  - musl-dev
+  - clang
+  - dbus-dev
+sources:
+  - https://git.sr.ht/~mariusor/mpris-ctl
+tasks:
+  - build_debug: |
+      test ${BUILD_SUBMITTER} != "git.sr.ht" && complete-build
+      cd mpris-ctl
+      make debug
+  - build_release: |
+      cd mpris-ctl
+      make release
