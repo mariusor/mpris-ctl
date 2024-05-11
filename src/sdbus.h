@@ -779,17 +779,10 @@ _unref_message_err:
     return status;
 }
 
-int set_volume(DBusConnection* conn, const mpris_player player, const struct volume_change volume)
+int set_volume(DBusConnection* conn, const mpris_player player, const double volume)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
-
-    double abs_volume = volume.value;
-    if (volume.type == volume_change_relative) {
-        mpris_properties p = {0};
-        load_mpris_properties(conn, player.namespace, &p);
-        abs_volume += p.volume;
-    }
 
     DBusError err = {0};
     dbus_error_init(&err);
@@ -818,7 +811,7 @@ int set_volume(DBusConnection* conn, const mpris_player player, const struct vol
     if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_DOUBLE_AS_STRING, &variant)) {
         goto _unref_message_err;
     }
-    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &abs_volume)) {
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &volume)) {
         goto _unref_message_err;
     }
     if (!dbus_message_iter_close_container(&args, &variant)) {

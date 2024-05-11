@@ -49,7 +49,7 @@
 "Art URL:\t" INFO_ART_URL "\n" \
 "Track:\t\t" INFO_TRACK_NUMBER "\n" \
 "Length:\t\t" INFO_TRACK_LENGTH "\n" \
-"Volume:\t\t" INFO_VOLUME "\n" \
+"Volume:\t\t" INFO_VOLUME "%\n" \
 "Loop status:\t" INFO_LOOP_STATUS "\n" \
 "Shuffle:\t" INFO_SHUFFLE_MODE "\n" \
 "Position:\t" INFO_POSITION "\n" \
@@ -108,9 +108,10 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
 "\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
 "\n" \
-"\t" CMD_VOLUME "\t\tpercentage[+|-] Modify the volume for the player.\n" \
-"\t\t\tThe percentage can be a float value from 0% to 100% to set the volume to the respective level.\n" \
-"\t\t\tThe percentage can be followed by a \"+\", or a \"-\", to increase, or decrease the volume by the respective value.\n" \
+"\t" CMD_VOLUME "\t\t[+|-][percentage] Modify the volume for the player.\n" \
+"\t\t\tThe percentage can be a float value from 0 to 100 to set the volume to the respective percentage level.\n" \
+"\t\t\tThe percentage can be prefixed by a \"+\", or a \"-\", to increase, or decrease the volume by the respective value.\n" \
+"\t\t\tIf the percentage argument is not present, the current volume will be output (equivalent to '" CMD_INFO " %" INFO_VOLUME "').\n" \
 "\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
@@ -232,8 +233,8 @@ void print_mpris_info(mpris_properties *props, const char* format)
 {
     const char* info_full = INFO_FULL_STATUS;
     const char* shuffle_label = (props->shuffle ? TRUE_LABEL : FALSE_LABEL);
-    char volume_label[5];
-    snprintf(volume_label, 5, "%.2f", props->volume);
+    char volume_label[7];
+    snprintf(volume_label, 7, "%.2lf", props->volume*MAX_VOLUME);
     char pos_label[11];
     snprintf(pos_label, 11, "%.2lfs", (props->position / 1000000.0));
     char track_number_label[6];
@@ -332,10 +333,10 @@ int parse_time_argument(const char *time_string, int *ms)
     return 0;
 }
 
-int parse_decimal_argument(const char *decimal_string, struct volume_change *vol)
+int parse_volume_argument(const char *decimal_string, struct volume_change *vol)
 {
     char suffix = 0;
-    const int loaded = sscanf(decimal_string, "%lf%c", &vol->value, &suffix);
+    const int loaded = sscanf(decimal_string, "%c%lf", &suffix, &vol->value);
     if (loaded == 0) {
         return -1;
     }
@@ -523,7 +524,7 @@ int main(int argc, char** argv)
                 if (has_next_argument(argc, argv, i)) {
                     char *state = argv[++i];
                     if (parse_bool_argument(state, &on_arg) < 0) {
-                        fprintf(stderr, "Invalid shuffle argument '%s'. Use one of 'on'/'off'.\n", state);
+                        fprintf(stderr, "Invalid shuffle argument '%s'. Use one of '" BOOL_ON "'/'" BOOL_OFF "'.\n", state);
                         goto _exit;
                     }
                 }
@@ -532,28 +533,28 @@ int main(int argc, char** argv)
                 if (has_next_argument(argc, argv, i)) {
                     char *state = argv[++i];
                     if (parse_bool_argument(state, &on_arg) < 0) {
-                        fprintf(stderr, "Invalid repeat argument '%s'. Use one of 'on'/'off'.\n", state);
+                        fprintf(stderr, "Invalid repeat argument '%s'. Use one of '" BOOL_ON "'/'" BOOL_OFF "'.\n", state);
                         goto _exit;
                     }
                 }
             } else if (strncmp(command, CMD_VOLUME, strlen(CMD_VOLUME)) == 0) {
                 cmd.command = c_volume;
-                if (has_next_argument(argc, argv, i)) {
-                    char *state = argv[++i];
-                    if (parse_decimal_argument(state, &volume) < 0) {
-                        fprintf(stderr, "Invalid volume argument '%s'. Use a float value.\n", state);
-                        goto _exit;
+                if (!has_next_argument(argc, argv, i)) {
+                    cmd.command = c_info;
+                    info_format = INFO_VOLUME;
+                    break;
+                }
+                char *state = argv[++i];
+                if (parse_volume_argument(state, &volume) < 0) {
+                    fprintf(stderr, "Invalid volume argument '%s'. Use a float value.\n", state);
+                    goto _exit;
+                }
+                if (volume_change_valid(volume) < 0) {
+                    if (volume.type == volume_change_absolute) {
+                        fprintf(stderr, "Invalid volume value '%s'. Use a value between %.2f%% andd %.2f%%.\n", state, MIN_VOLUME, MAX_VOLUME);
+                    } else {
+                        fprintf(stderr, "Invalid volume value '%s'. Use a value less than %.2f%%.\n", state, MAX_VOLUME);
                     }
-                    if (volume_change_valid(volume) < 0) {
-                        if (volume.type == volume_change_absolute) {
-                            fprintf(stderr, "Invalid volume value '%s'. Use a value between %.2f%% andd %.2f%%.\n", state, MIN_VOLUME, MAX_VOLUME);
-                        } else {
-                            fprintf(stderr, "Invalid volume value '%s'. Use a value less than %.2f%%.\n", state, MAX_VOLUME);
-                        }
-                        goto _exit;
-                    }
-                } else {
-                    fprintf(stderr, "Please pass a volume argument.\n");
                     goto _exit;
                 }
             }
@@ -646,8 +647,11 @@ int main(int argc, char** argv)
                 cmd.status = EXIT_SUCCESS;
             }
         } else if (cmd.command == c_volume) {
-            volume.value = volume.value / MAX_VOLUME;
-            if (set_volume(conn, player, volume) > 0) {
+            double abs_volume = volume.value / MAX_VOLUME;
+            if (volume.type == volume_change_relative) {
+                abs_volume += player.properties.volume;
+            }
+            if (set_volume(conn, player, abs_volume) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }
         } else {
