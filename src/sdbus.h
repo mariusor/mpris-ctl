@@ -34,10 +34,7 @@
 #define MPRIS_PROP_METADATA        "Metadata"
 #define MPRIS_ARG_PLAYER_IDENTITY  "Identity"
 
-#define DBUS_DESTINATION           "org.freedesktop.DBus"
 #define DBUS_PATH                  "/"
-#define DBUS_INTERFACE             "org.freedesktop.DBus"
-#define DBUS_PROPERTIES_INTERFACE  "org.freedesktop.DBus.Properties"
 #define DBUS_METHOD_LIST_NAMES     "ListNames"
 #define DBUS_METHOD_GET_ALL        "GetAll"
 #define DBUS_METHOD_GET            "Get"
@@ -126,16 +123,15 @@ void mpris_metadata_init(mpris_metadata* metadata)
     memcpy(metadata->title, "unknown", 8);
 }
 
-DBusMessage* call_dbus_method(DBusConnection* conn, char* destination, char* path, char* interface, char* method)
+DBusMessage* call_dbus_method(DBusConnection* conn, const char* destination, const char* path, const char* interface, char* method)
 {
     if (NULL == conn) { return NULL; }
     if (NULL == destination) { return NULL; }
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(destination, path, interface, method);
+    DBusMessage* msg = dbus_message_new_method_call(destination, path, interface, method);
     if (NULL == msg) { return NULL; }
 
     // send message and get a handle for a reply
@@ -370,21 +366,20 @@ void get_player_identity(char *identity, DBusConnection *conn, const char* desti
     if (NULL == identity) { return; }
     if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return; }
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter params;
 
-    char *interface = DBUS_PROPERTIES_INTERFACE;
-    char *method = DBUS_METHOD_GET;
-    char *path = MPRIS_PLAYER_PATH;
-    char *arg_interface = MPRIS_PLAYER_NAMESPACE;
-    char *arg_identity = MPRIS_ARG_PLAYER_IDENTITY;
+    const char *interface = DBUS_INTERFACE_PROPERTIES;
+    const char *method = DBUS_METHOD_GET;
+    const char *path = MPRIS_PLAYER_PATH;
+    const char *arg_interface = MPRIS_PLAYER_NAMESPACE;
+    const char *arg_identity = MPRIS_ARG_PLAYER_IDENTITY;
 
     DBusError err = {0};
     dbus_error_init(&err);
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(destination, path, interface, method);
+    DBusMessage* msg = dbus_message_new_method_call(destination, path, interface, method);
     if (NULL == msg) { return; }
 
     // append interface we want to get the property from
@@ -443,20 +438,19 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
     if (NULL == conn) { return; }
     if (NULL == destination) { return; }
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter params;
 
     DBusError err = {0};
     dbus_error_init(&err);
 
-    char* interface = DBUS_PROPERTIES_INTERFACE;
-    char* method = DBUS_METHOD_GET_ALL;
-    char* path = MPRIS_PLAYER_PATH;
-    char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    const char* interface = DBUS_INTERFACE_PROPERTIES;
+    const char* method = DBUS_METHOD_GET_ALL;
+    const char* path = MPRIS_PLAYER_PATH;
+    const char* arg_interface = MPRIS_PLAYER_INTERFACE;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(destination, path, interface, method);
+    DBusMessage* msg = dbus_message_new_method_call(destination, path, interface, method);
     if (NULL == msg) { return; }
 
     // append interface we want to get the property from
@@ -570,12 +564,12 @@ _unref_message_err:
     return;
 }
 
-int seek(DBusConnection* conn, mpris_player player, int ms)
+int seek(DBusConnection* conn, const mpris_player player, const int ms)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
 
-    DBusMessage* msg;
+
     DBusPendingCall* pending;
     DBusMessageIter args;
 
@@ -583,10 +577,10 @@ int seek(DBusConnection* conn, mpris_player player, int ms)
     dbus_error_init(&err);
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
+    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
     if (NULL == msg) { return status; }
 
-    int64_t usec = ms * 1000;
+    const int64_t usec = ms * 1000;
     dbus_message_iter_init_append(msg, &args);
     if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_INT64, &usec)) {
         status = -1;
@@ -628,7 +622,7 @@ _unref_message_err:
     return status;
 }
 
-int shuffle(DBusConnection* conn, mpris_player player, bool state)
+int shuffle(DBusConnection* conn, const mpris_player player, bool state)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
@@ -636,7 +630,6 @@ int shuffle(DBusConnection* conn, mpris_player player, bool state)
     DBusError err = {0};
     dbus_error_init(&err);
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter args;
 
@@ -644,7 +637,7 @@ int shuffle(DBusConnection* conn, mpris_player player, bool state)
     char* arg_shuffle = MPRIS_PNAME_SHUFFLE;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_PROPERTIES_INTERFACE, DBUS_METHOD_SET);
+    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);
@@ -702,7 +695,7 @@ _unref_message_err:
     return status;
 }
 
-int set_loopstatus(DBusConnection* conn, mpris_player player, const char* loop_state)
+int set_loopstatus(DBusConnection* conn, const mpris_player player, const char* loop_state)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
@@ -718,7 +711,7 @@ int set_loopstatus(DBusConnection* conn, mpris_player player, const char* loop_s
     char* arg_loopstatus = MPRIS_PNAME_LOOPSTATUS;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_PROPERTIES_INTERFACE, DBUS_METHOD_SET);
+    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);
@@ -776,22 +769,95 @@ _unref_message_err:
     return status;
 }
 
+int set_volume(DBusConnection* conn, const mpris_player player, const double volume)
+{
+    if (NULL == conn) { return 0; }
+    int status = 0;
+
+    DBusError err = {0};
+    dbus_error_init(&err);
+
+    DBusPendingCall* pending;
+    DBusMessageIter args;
+
+    const char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    const char* arg_volume = MPRIS_PNAME_VOLUME;
+
+    // create a new method call and check for errors
+    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
+    if (NULL == msg) { return status; }
+
+    dbus_message_iter_init_append(msg, &args);
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_interface)) {
+        goto _unref_message_err;
+    }
+
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &arg_volume)) {
+        goto _unref_message_err;
+    }
+
+    DBusMessageIter variant = {0};
+    if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_DOUBLE_AS_STRING, &variant)) {
+        goto _unref_message_err;
+    }
+    fprintf(stderr, "volume to dbus is %.2f\n", volume);
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_DOUBLE, &volume)) {
+        goto _unref_message_err;
+    }
+    if (!dbus_message_iter_close_container(&args, &variant)) {
+        goto _unref_message_err;
+    }
+
+    // send message and get a handle for a reply
+    if (!dbus_connection_send_with_reply (conn, msg, &pending, DBUS_CONNECTION_TIMEOUT) || NULL == pending) {
+        goto _unref_message_err;
+    }
+    dbus_connection_flush(conn);
+
+    // block until we receive a reply
+    dbus_pending_call_block(pending);
+
+    DBusMessage* reply = NULL;
+    // get the reply message
+    reply = dbus_pending_call_steal_reply(pending);
+    if (NULL == reply) {
+        goto _unref_pending_err;
+    }
+
+    dbus_message_unref(reply);
+
+_unref_pending_err:
+    if (dbus_error_is_set(&err)) {
+        fprintf(stderr, "error: %s\n", err.message);
+        dbus_error_free(&err);
+        status = -1;
+    }
+
+    // free the pending message handle
+    dbus_pending_call_unref(pending);
+_unref_message_err:
+    // free message
+    dbus_message_unref(msg);
+
+    return status;
+}
+
 int load_mpris_players(DBusConnection* conn, mpris_player *players)
 {
     if (NULL == conn) { return 0; }
     if (NULL == players) { return 0; }
 
-    char* method = DBUS_METHOD_LIST_NAMES;
-    char* destination = DBUS_DESTINATION;
-    char* path = DBUS_PATH;
-    char* interface = DBUS_INTERFACE;
+    const char* method = DBUS_METHOD_LIST_NAMES;
+    const char* bus = DBUS_SERVICE_DBUS;
+    const char* path = DBUS_PATH;
+    const char* interface = DBUS_INTERFACE_DBUS;
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
     int cnt = 0;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(destination, path, interface, method);
+    DBusMessage* msg = dbus_message_new_method_call(bus, path, interface, method);
     if (NULL == msg) { return cnt; }
 
     // send message and get a handle for a reply

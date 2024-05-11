@@ -14,14 +14,14 @@
 void str_replace(char* source, const char* search, const char* replace)
 {
     if (NULL == source) { return; }
-    size_t so_len = strlen(source);
+    const size_t so_len = strlen(source);
 
     if (so_len == 0) { return; }
 
     if (NULL == search) { return; }
     if (NULL == replace) { return; }
 
-    size_t se_len = strlen(search);
+    const size_t se_len = strlen(search);
     if (se_len == 0) { return; }
 
     if (se_len > so_len) { return; }
@@ -56,10 +56,10 @@ void str_replace(char* source, const char* search, const char* replace)
 
     size_t source_iterator = 0;
     for (size_t i = 0; i < matches_cnt; i++) {
-        size_t match = matches[i];
+        const size_t match = matches[i];
 
         if (source_iterator < match) {
-            size_t non_match_len = match - source_iterator;
+            const size_t non_match_len = match - source_iterator;
             strncat(result, source + source_iterator, non_match_len);
         }
         source_iterator = match + se_len;
@@ -67,7 +67,7 @@ void str_replace(char* source, const char* search, const char* replace)
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
-        size_t remaining_len = so_len - source_iterator;
+        const size_t remaining_len = so_len - source_iterator;
         strncat(result, source + source_iterator, remaining_len);
     }
     memcpy(source, result, strlen(result));

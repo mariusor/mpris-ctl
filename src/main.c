@@ -24,6 +24,7 @@
 #define CMD_SEEK        "seek"
 #define CMD_SHUFFLE     "shuffle"
 #define CMD_REPEAT      "repeat"
+#define CMD_VOLUME      "volume"
 
 #define CMD_LIST        "list"
 #define CMD_INFO        "info"
@@ -78,6 +79,9 @@
 #define TRUE_LABEL      "true"
 #define FALSE_LABEL     "false"
 
+#define MAX_VOLUME      100.0f
+#define MIN_VOLUME        0.0f
+
 #define HELP_MESSAGE    "MPRIS control, version %s\n" \
 "Usage:\n  %s [" ARG_PLAYER " " PLAYER_ACTIVE " | " PLAYER_INACTIVE " | <name ...>] [COMMAND] - Control running MPRIS player\n" \
 "\n" \
@@ -103,6 +107,9 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t\t\tThe time can be a float value, if absent it defaults to 5 seconds.\n" \
 "\t\t\tThe time can be a negative value, which seeks backwards.\n" \
 "\t\t\tThe unit can be one of ms(milliseconds), s(seconds), m(minutes), if absent it defaults to seconds.\n" \
+"\n" \
+"\t" CMD_VOLUME "\t\tpercentage Modify the volume for the player.\n" \
+"\t\t\tPercentage represents a single numeric value from 0 - 100, it sets the volume to that value.\n" \
 "\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
@@ -136,8 +143,8 @@ const char* get_version(void)
     return VERSION_HASH;
 }
 
-const char commands[13][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT, CMD_PREVIOUS,
-    CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE, CMD_REPEAT,};
+const char commands[14][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT, CMD_PREVIOUS,
+    CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE, CMD_REPEAT, CMD_VOLUME, };
 
 enum cmd {
     c_help,
@@ -153,6 +160,7 @@ enum cmd {
     c_info,
     c_shuffle,
     c_repeat,
+    c_volume,
 
     c_count
 };
@@ -190,14 +198,11 @@ const char *get_dbus_method (enum cmd command)
     if (command == c_seek) {
         return MPRIS_METHOD_SEEK;
     }
-    if (command == c_shuffle) {
-        return DBUS_METHOD_SET;
-    }
-    if (command == c_repeat) {
+    if (command == c_shuffle || command == c_repeat || command == c_volume) {
         return DBUS_METHOD_SET;
     }
     if (command == c_status || command == c_info || command == c_list) {
-        return DBUS_PROPERTIES_INTERFACE;
+        return DBUS_INTERFACE_PROPERTIES;
     }
 
     return NULL;
@@ -205,10 +210,9 @@ const char *get_dbus_method (enum cmd command)
 
 void print_help(char* name)
 {
-    const char* help_msg;
     const char* version = get_version();
 
-    help_msg = HELP_MESSAGE;
+    const char *help_msg = HELP_MESSAGE;
     char* info_def = INFO_DEFAULT_STATUS;
 
     fprintf(stdout, help_msg, version, name, info_def);
@@ -273,7 +277,7 @@ enum repeat_mode {
     ls_count,
 };
 
-int parse_bool_argument(char *bool_string, enum bool_arg *state)
+int parse_bool_argument(const char *bool_string, enum bool_arg *state)
 {
     if (strncmp(bool_string, FALSE_LABEL, strlen(FALSE_LABEL)) == 0) {
         *state = b_off;
@@ -293,7 +297,7 @@ int parse_bool_argument(char *bool_string, enum bool_arg *state)
     return 0;
 }
 
-int parse_time_argument(char *time_string, int *ms)
+int parse_time_argument(const char *time_string, int *ms)
 {
     *ms = DEFAULT_SKEEP_MSEC;
     if (NULL == time_string) { return 0; }
@@ -301,7 +305,7 @@ int parse_time_argument(char *time_string, int *ms)
     float time_units = -1.0;
     char suffix[10] = {0};
 
-    int loaded = sscanf(time_string, "%f%s", &time_units, (char*)&suffix);
+    const int loaded = sscanf(time_string, "%f%s", &time_units, (char*)&suffix);
     if (loaded == 0 || loaded == EOF) return 0;
     if (loaded == 1) suffix[0] = 's';
 
@@ -316,6 +320,15 @@ int parse_time_argument(char *time_string, int *ms)
     }
 
     return 0;
+}
+
+int parse_decimal_argument(const char *decimal_string, double *value)
+{
+    const int loaded = sscanf(decimal_string, "%lf", value);
+    if (loaded == 1) {
+        return 0;
+    }
+    return -1;
 }
 
 bool arg_is_command(const char *param)
@@ -347,7 +360,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
     bool active_players = false;
     bool inactive_players = false;
     while (true) {
-        int char_arg = getopt_long(param_count, params, "", long_options, NULL);
+        const int char_arg = getopt_long(param_count, params, "", long_options, NULL);
         if (char_arg == -1) { break; }
         switch (char_arg) {
             case 1:
@@ -404,7 +417,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
         }
 
         for (int i = 0; i < player_names_count; i++) {
-            char *player_name = cmd->player_names[i];
+            const char *player_name = cmd->player_names[i];
             if (NULL != player_name) {
                 size_t name_len = strlen(player_name);
                 size_t prop_name_len = strlen(player->properties.player_name);
@@ -424,7 +437,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
     }
 }
 
-bool has_next_argument(int argc, char** argv, int i)
+bool has_next_argument(const int argc, char** argv, const int i)
 {
     return i+1 < argc && strncmp(argv[i+1], "--", 2) != 0;
 }
@@ -445,6 +458,7 @@ int main(int argc, char** argv)
 
     enum bool_arg on_arg;
     enum repeat_mode repeat_mode = {0};
+    double volume = 0.0l;
 
     /**
      * First we go through the arguments to determine the command
@@ -504,6 +518,22 @@ int main(int argc, char** argv)
                         fprintf(stderr, "Invalid repeat argument '%s'. Use one of 'on'/'off'.\n", state);
                         goto _exit;
                     }
+                }
+            } else if (strncmp(command, CMD_VOLUME, strlen(CMD_VOLUME)) == 0) {
+                cmd.command = c_volume;
+                if (has_next_argument(argc, argv, i)) {
+                    char *state = argv[++i];
+                    if (parse_decimal_argument(state, &volume) < 0) {
+                        fprintf(stderr, "Invalid volume argument '%s'. Use a numeric value.\n", state);
+                        goto _exit;
+                    }
+                    if (volume < MIN_VOLUME || volume > MAX_VOLUME) {
+                        fprintf(stderr, "Invalid volume value '%s'. Use a value between %.2f - %.2f.\n", state, MIN_VOLUME, MAX_VOLUME);
+                        goto _exit;
+                    }
+                } else {
+                    fprintf(stderr, "Please pass a volume argument.\n");
+                    goto _exit;
                 }
             }
         }
@@ -592,6 +622,11 @@ int main(int argc, char** argv)
                 }
             }
             if (set_loopstatus(conn, player, state) > 0) {
+                cmd.status = EXIT_SUCCESS;
+            }
+        } else if (cmd.command == c_volume) {
+            volume = volume / MAX_VOLUME;
+            if (set_volume(conn, player, volume) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }
         } else {
