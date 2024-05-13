@@ -357,16 +357,19 @@ int parse_time_argument(const char *time_string, int *ms)
 
 int parse_volume_argument(const char *decimal_string, struct volume_change *vol)
 {
-    char suffix = 0;
-    const int loaded = sscanf(decimal_string, "%c%lf", &suffix, &vol->value);
+    char suffix = decimal_string[0];
+    char *value = (char*)decimal_string;
+    if (decimal_string[0] == '+' || decimal_string[0] == '-') {
+        vol->type = volume_change_relative;
+        value = (char*)decimal_string+1;
+    }
+
+    const int loaded = sscanf(value, "%lf", &vol->value);
     if (loaded == 0) {
         return -1;
     }
-    if (loaded == 2) {
-        vol->type = volume_change_relative;
-        if (suffix == '-') {
-            vol->value = -1.0l * vol->value;
-        }
+    if (suffix == '-') {
+        vol->value = -1.0l * vol->value;
     }
     return 0;
 }
