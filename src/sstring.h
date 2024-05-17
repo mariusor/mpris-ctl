@@ -63,7 +63,7 @@ void str_replace(char* source, const char* search, const char* replace)
             strncat(result, source + source_iterator, non_match_len);
         }
         source_iterator = match + se_len;
-        strncat(result, replace, MIN(MAX_OUTPUT_LENGTH, strlen(replace)));
+        strncat(result, replace, MAX_OUTPUT_LENGTH-1);
     }
     // copy the remaining end of source
     if (source_iterator < so_len) {
