@@ -632,7 +632,7 @@ _unref_message_err:
     return status;
 }
 
-int shuffle(DBusConnection* conn, const mpris_player player, bool state)
+int shuffle(DBusConnection* conn, const mpris_player player, const bool *state)
 {
     if (NULL == conn) { return 0; }
     int status = 0;
@@ -664,7 +664,7 @@ int shuffle(DBusConnection* conn, const mpris_player player, bool state)
     if (!dbus_message_iter_open_container(&args, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &variant)) {
         goto _unref_message_err;
     }
-    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, &state)) {
+    if (!dbus_message_iter_append_basic(&variant, DBUS_TYPE_BOOLEAN, state)) {
         goto _unref_message_err;
     }
     if (!dbus_message_iter_close_container(&args, &variant)) {
@@ -713,7 +713,6 @@ int set_loopstatus(DBusConnection* conn, const mpris_player player, const char* 
     DBusError err = {0};
     dbus_error_init(&err);
 
-    DBusMessage* msg;
     DBusPendingCall* pending;
     DBusMessageIter args;
 
@@ -721,7 +720,7 @@ int set_loopstatus(DBusConnection* conn, const mpris_player player, const char* 
     char* arg_loopstatus = MPRIS_PNAME_LOOPSTATUS;
 
     // create a new method call and check for errors
-    msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
+    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);

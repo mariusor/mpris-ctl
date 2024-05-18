@@ -499,6 +499,7 @@ int main(int argc, char** argv)
     int ms = DEFAULT_SKEEP_MSEC;
     char *info_format = NULL;
 
+    bool shuffle_mode = false;
     enum bool_arg on_arg;
     enum repeat_mode repeat_mode = {0};
     struct volume_change volume = {0};
@@ -632,19 +633,18 @@ int main(int argc, char** argv)
             print_mpris_info(&player.properties, info_format);
             cmd.status = EXIT_SUCCESS;
         } else if (cmd.command == c_seek) {
-            if (seek (conn, player, ms) > 0) {
+            if (seek(conn, player, ms) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }
         } else if (cmd.command == c_shuffle) {
-            bool state = false;
             if (on_arg == b_unset) {
-                state = !player.properties.shuffle;
+                shuffle_mode = !player.properties.shuffle;
             } else if (on_arg == b_on) {
-                state = true;
-            } else {
-                state = false;
+                shuffle_mode = true;
+            } else if (on_arg == b_off) {
+                shuffle_mode = false;
             }
-            if (shuffle(conn, player, state) > 0) {
+            if (shuffle(conn, player, &shuffle_mode) > 0) {
                 cmd.status = EXIT_SUCCESS;
             }
         } else if (cmd.command == c_repeat) {
