@@ -5,10 +5,12 @@
 #include <stdio.h>
 #include <dbus/dbus.h>
 
+#define MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE "org.mpris.MediaPlayer2.Player"
+#define MPRIS_MEDIA_PLAYER_INTERFACE        "org.mpris.MediaPlayer2"
+
 #define LOCAL_NAME                 "org.mpris.mprisctl"
 #define MPRIS_PLAYER_NAMESPACE     "org.mpris.MediaPlayer2"
 #define MPRIS_PLAYER_PATH          "/org/mpris/MediaPlayer2"
-#define MPRIS_PLAYER_INTERFACE     "org.mpris.MediaPlayer2.Player"
 #define MPRIS_METHOD_NEXT          "Next"
 #define MPRIS_METHOD_PREVIOUS      "Previous"
 #define MPRIS_METHOD_PLAY          "Play"
@@ -16,6 +18,7 @@
 #define MPRIS_METHOD_STOP          "Stop"
 #define MPRIS_METHOD_PLAY_PAUSE    "PlayPause"
 #define MPRIS_METHOD_SEEK          "Seek"
+#define MPRIS_METHOD_RAISE         "Raise"
 
 #define MPRIS_PNAME_PLAYBACKSTATUS "PlaybackStatus"
 #define MPRIS_PNAME_CANCONTROL     "CanControl"
@@ -457,7 +460,7 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
     const char* interface = DBUS_INTERFACE_PROPERTIES;
     const char* method = DBUS_METHOD_GET_ALL;
     const char* path = MPRIS_PLAYER_PATH;
-    const char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    const char* arg_interface = MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE;
 
     // create a new method call and check for errors
     DBusMessage* msg = dbus_message_new_method_call(destination, path, interface, method);
@@ -587,7 +590,7 @@ int seek(DBusConnection* conn, const mpris_player player, const int ms)
     dbus_error_init(&err);
 
     // create a new method call and check for errors
-    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
+    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
     if (NULL == msg) { return status; }
 
     const int64_t usec = ms * 1000;
@@ -643,7 +646,7 @@ int shuffle(DBusConnection* conn, const mpris_player player, const bool *state)
     DBusPendingCall* pending;
     DBusMessageIter args;
 
-    char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    char* arg_interface = MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE;
     char* arg_shuffle = MPRIS_PNAME_SHUFFLE;
 
     // create a new method call and check for errors
@@ -716,7 +719,7 @@ int set_loopstatus(DBusConnection* conn, const mpris_player player, const char* 
     DBusPendingCall* pending;
     DBusMessageIter args;
 
-    char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    char* arg_interface = MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE;
     char* arg_loopstatus = MPRIS_PNAME_LOOPSTATUS;
 
     // create a new method call and check for errors
@@ -789,7 +792,7 @@ int set_volume(DBusConnection* conn, const mpris_player player, const double vol
     DBusPendingCall* pending;
     DBusMessageIter args;
 
-    const char* arg_interface = MPRIS_PLAYER_INTERFACE;
+    const char* arg_interface = MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE;
     const char* arg_volume = MPRIS_PNAME_VOLUME;
 
     // create a new method call and check for errors

@@ -20,6 +20,7 @@
 #define CMD_NEXT        "next"
 #define CMD_PREVIOUS    "prev"
 #define CMD_PLAY_PAUSE  "pp"
+#define CMD_RAISE       "raise"
 #define CMD_STATUS      "status"
 #define CMD_SEEK        "seek"
 #define CMD_SHUFFLE     "shuffle"
@@ -113,6 +114,8 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t\t\tThe percentage can be prefixed by a \"+\", or a \"-\", to increase, or decrease the volume by the respective value.\n" \
 "\t\t\tIf the percentage argument is not present, the current volume will be output (equivalent to '" CMD_INFO " %" INFO_VOLUME "').\n" \
 "\n" \
+"\t" CMD_RAISE "\t\tRaise the window of the player if hidden.\n" \
+"\n" \
 "\t" CMD_STATUS "\t\tGet the playback status (equivalent to '" CMD_INFO " %" INFO_PLAYBACK_STATUS "')\n" \
 "\t" CMD_LIST "\t\tGet the name of the running player(s) (equivalent to '" CMD_INFO " %" INFO_PLAYER_NAME "')\n" \
 "\t" CMD_INFO "\t\t<format> Display information about the current track.\n" \
@@ -145,8 +148,8 @@ const char* get_version(void)
     return VERSION_HASH;
 }
 
-const char commands[14][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT, CMD_PREVIOUS,
-    CMD_PLAY_PAUSE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE, CMD_REPEAT, CMD_VOLUME, };
+const char commands[15][9] = {CMD_HELP, CMD_PLAY, CMD_PAUSE, CMD_STOP, CMD_NEXT, CMD_PREVIOUS,
+    CMD_PLAY_PAUSE, CMD_RAISE, CMD_STATUS, CMD_SEEK, CMD_LIST, CMD_INFO, CMD_SHUFFLE, CMD_REPEAT, CMD_VOLUME, };
 
 enum cmd {
     c_help,
@@ -163,6 +166,7 @@ enum cmd {
     c_shuffle,
     c_repeat,
     c_volume,
+    c_raise,
 
     c_count
 };
@@ -214,6 +218,9 @@ const char *get_dbus_method (enum cmd command)
     }
     if (command == c_status || command == c_info || command == c_list) {
         return DBUS_INTERFACE_PROPERTIES;
+    }
+    if (command == c_raise) {
+        return MPRIS_METHOD_RAISE;
     }
 
     return NULL;
@@ -541,6 +548,8 @@ int main(int argc, char** argv)
                 cmd.command = c_pause;
             } else if (strncmp(command, CMD_PREVIOUS, strlen(CMD_PREVIOUS)) == 0) {
                 cmd.command = c_previous;
+            } else if (strncmp(command, CMD_RAISE, strlen(CMD_RAISE)) == 0) {
+                cmd.command = c_raise;
             } else if (strncmp(command, CMD_NEXT, strlen(CMD_NEXT)) == 0) {
                 cmd.command = c_next;
             } else if (strncmp(command, CMD_STOP, strlen(CMD_STOP)) == 0) {
@@ -626,7 +635,7 @@ int main(int argc, char** argv)
         mpris_player player = cmd.players[i];
         if (player.skip) {
             if (cmd.player_names[0][0] != 0) continue;
-            if (cmd.command != c_play) continue;
+            if (cmd.command != c_play && cmd.command != c_raise) continue;
         }
 
         if (cmd.command == c_info || cmd.command == c_status || cmd.command == c_list) {
@@ -680,7 +689,11 @@ int main(int argc, char** argv)
                 cmd.status = EXIT_SUCCESS;
             }
         } else {
-            DBusMessage *msg = call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, MPRIS_PLAYER_INTERFACE, dbus_method);
+            const char* interface = MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE;
+            if (cmd.command == c_raise) {
+                interface = MPRIS_MEDIA_PLAYER_INTERFACE;
+            }
+            DBusMessage *msg = call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, interface, dbus_method);
             if (NULL != msg) {
                 cmd.status = EXIT_SUCCESS;
             }
