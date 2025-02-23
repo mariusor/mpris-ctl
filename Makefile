@@ -33,7 +33,8 @@ leak: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=a
 leak:
 	$(MAKE) BIN_NAME=mpris-ctl-leak
 
-memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory -fsanitize-blacklist=sanitize-blacklist.txt -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer
+current_dir = $(shell pwd)
+memory: export CFLAGS := $(CFLAGS) $(COMPILE_FLAGS) $(DCOMPILE_FLAGS) -fsanitize=memory -fsanitize-blacklist=$(current_dir)/sanitize-blacklist.txt -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer
 memory:
 	$(MAKE) BIN_NAME=mpris-ctl-memory
 
