@@ -100,14 +100,15 @@ typedef struct mpris_properties {
     bool can_seek;
     bool shuffle;
     char player_name[MAX_OUTPUT_LENGTH];
+    char player_identity[MAX_OUTPUT_LENGTH];
     char loop_status[MAX_OUTPUT_LENGTH];
     char playback_status[MAX_OUTPUT_LENGTH];
     mpris_metadata metadata;
 } mpris_properties;
 
 typedef struct mpris_player {
-    char *name;
-    char namespace[MAX_OUTPUT_LENGTH];
+    char *identity;
+    char name[MAX_OUTPUT_LENGTH];
     mpris_properties properties;
     bool skip;
 } mpris_player;
@@ -377,7 +378,7 @@ void get_player_identity(char *identity, DBusConnection *conn, const char* desti
     if (NULL == conn) { return; }
     if (NULL == destination) { return; }
     if (NULL == identity) { return; }
-    if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE))) { return; }
+    if (strncmp(MPRIS_PLAYER_NAMESPACE, destination, strlen(MPRIS_PLAYER_NAMESPACE)) != 0) { return; }
 
     DBusPendingCall* pending;
     DBusMessageIter params;
@@ -562,7 +563,13 @@ void load_mpris_properties(DBusConnection* conn, const char* destination, mpris_
     // free message
     dbus_message_unref(msg);
 
-    get_player_identity(properties->player_name, conn, destination);
+    const size_t mprisIntfLen = strlen(MPRIS_MEDIA_PLAYER_INTERFACE) + 1; // to include the .
+    const size_t fullDBusNameLen = strlen(destination);
+
+    if (fullDBusNameLen > mprisIntfLen) {
+        memcpy(properties->player_name, &destination[mprisIntfLen], fullDBusNameLen-mprisIntfLen);
+    }
+    get_player_identity(properties->player_identity, conn, destination);
     return;
 
 _unref_pending_err:
@@ -590,7 +597,7 @@ int seek(DBusConnection* conn, const mpris_player player, const int ms)
     dbus_error_init(&err);
 
     // create a new method call and check for errors
-    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
+    DBusMessage* msg = dbus_message_new_method_call(player.name, MPRIS_PLAYER_PATH, MPRIS_MEDIA_PLAYER_PLAYER_INTERFACE, MPRIS_METHOD_SEEK);
     if (NULL == msg) { return status; }
 
     const int64_t usec = ms * 1000;
@@ -650,7 +657,7 @@ int shuffle(DBusConnection* conn, const mpris_player player, const bool *state)
     char* arg_shuffle = MPRIS_PNAME_SHUFFLE;
 
     // create a new method call and check for errors
-    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
+    DBusMessage* msg = dbus_message_new_method_call(player.name, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);
@@ -723,7 +730,7 @@ int set_loopstatus(DBusConnection* conn, const mpris_player player, const char* 
     char* arg_loopstatus = MPRIS_PNAME_LOOPSTATUS;
 
     // create a new method call and check for errors
-    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
+    DBusMessage* msg = dbus_message_new_method_call(player.name, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);
@@ -796,7 +803,7 @@ int set_volume(DBusConnection* conn, const mpris_player player, const double vol
     const char* arg_volume = MPRIS_PNAME_VOLUME;
 
     // create a new method call and check for errors
-    DBusMessage* msg = dbus_message_new_method_call(player.namespace, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
+    DBusMessage* msg = dbus_message_new_method_call(player.name, MPRIS_PLAYER_PATH, DBUS_INTERFACE_PROPERTIES, DBUS_METHOD_SET);
     if (NULL == msg) { return status; }
 
     dbus_message_iter_init_append(msg, &args);
@@ -896,7 +903,7 @@ int load_mpris_players(DBusConnection* conn, mpris_player *players)
                 char *str = NULL;
                 dbus_message_iter_get_basic(&arrayElementIter, &str);
                 if (!strncmp(str, MPRIS_PLAYER_NAMESPACE, strlen(MPRIS_PLAYER_NAMESPACE))) {
-                    memcpy(players[cnt].namespace, str, strlen(str)+1);
+                    memcpy(players[cnt].name, str, strlen(str)+1);
                     cnt++;
                 }
             }

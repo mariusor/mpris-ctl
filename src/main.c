@@ -41,7 +41,7 @@
 #define BOOL_OFF         "off"
 
 #define INFO_DEFAULT_STATUS "%track_name - %album_name - %artist_name"
-#define INFO_FULL_STATUS    "Player name:\t" INFO_PLAYER_NAME "\n" \
+#define INFO_FULL_STATUS    "Player name:\t" INFO_PLAYER_IDENTITY "\n" \
 "Play status:\t" INFO_PLAYBACK_STATUS "\n" \
 "Track:\t\t" INFO_TRACK_NAME "\n" \
 "Artist:\t\t" INFO_ARTIST_NAME "\n" \
@@ -58,6 +58,7 @@
 "Comment:\t" INFO_COMMENT \
 ""
 
+#define INFO_PLAYER_IDENTITY "%player_identity"
 #define INFO_PLAYER_NAME     "%player_name"
 #define INFO_TRACK_NAME      "%track_name"
 #define INFO_TRACK_NUMBER    "%track_number"
@@ -122,7 +123,7 @@ ARG_PLAYER" "PLAYER_ACTIVE"\t\tExecute command only for the active player(s) (de
 "\t\t\tThe default format is '%s'\n" \
 "\n" \
 "Format specifiers for " CMD_INFO " command:\n" \
-"\t%" INFO_PLAYER_NAME "\tprints the player name\n" \
+"\t%" INFO_PLAYER_IDENTITY "\tprints the player identity\n" \
 "\t%" INFO_TRACK_NAME "\tprints the track name\n" \
 "\t%" INFO_TRACK_NUMBER "\tprints the track number\n" \
 "\t%" INFO_TRACK_LENGTH "\tprints the track length\n" \
@@ -281,6 +282,7 @@ void print_mpris_info(const mpris_properties *props, const char* format)
 
     str_replace(output, INFO_FULL, info_full);
     str_replace(output, INFO_PLAYER_NAME, props->player_name);
+    str_replace(output, INFO_PLAYER_IDENTITY, props->player_identity);
     str_replace(output, INFO_SHUFFLE_MODE, shuffle_label);
     str_replace(output, INFO_PLAYBACK_STATUS, props->playback_status);
     str_replace(output, INFO_VOLUME, volume_label);
@@ -453,7 +455,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
     cmd->player_count = load_mpris_players(conn, cmd->players);
     for (int i = 0; i < cmd->player_count; i++) {
         mpris_player *player = &cmd->players[i];
-        load_mpris_properties(conn, player->namespace, &player->properties);
+        load_mpris_properties(conn, player->name, &player->properties);
 
         player->skip = true;
         if (active_players && (strncmp(player->properties.playback_status, MPRIS_METADATA_VALUE_PLAYING, 8) == 0)) {
@@ -471,7 +473,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
             if (NULL != player_name) {
                 size_t name_len = strlen(player_name);
                 size_t prop_name_len = strlen(player->properties.player_name);
-                size_t prop_ns_len = strlen(player->namespace);
+                size_t prop_ns_len = strlen(player->name);
                 if (prop_name_len < name_len) {
                     prop_name_len = name_len ;
                 }
@@ -479,7 +481,7 @@ void load_players_flags(struct ctl *cmd, DBusConnection *conn, char *params[], i
                     prop_ns_len = name_len;
                 }
                 if (strncmp(player->properties.player_name, player_name, prop_name_len) == 0 ||
-                   strncmp(player->namespace, player_name, prop_ns_len) == 0) {
+                   strncmp(player->name, player_name, prop_ns_len) == 0) {
                     player->skip = false;
                 }
             }
@@ -693,7 +695,7 @@ int main(int argc, char** argv)
             if (cmd.command == c_raise) {
                 interface = MPRIS_MEDIA_PLAYER_INTERFACE;
             }
-            DBusMessage *msg = call_dbus_method(conn, player.namespace, MPRIS_PLAYER_PATH, interface, dbus_method);
+            DBusMessage *msg = call_dbus_method(conn, player.name, MPRIS_PLAYER_PATH, interface, dbus_method);
             if (NULL != msg) {
                 cmd.status = EXIT_SUCCESS;
             }
