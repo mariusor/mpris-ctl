@@ -8,7 +8,7 @@ packages:
 sources:
   - https://git.sr.ht/~mariusor/mpris-ctl
 secrets:
-  - 3dcea276-38d6-4a7e-85e5-20cbc903e1ea
+  - c523dfd7-44d6-4a1a-9971-5b355d02c567
 tasks:
   - build_debug: |
       test ${BUILD_SUBMITTER} != "git.sr.ht" && complete-build
